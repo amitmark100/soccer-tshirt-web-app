@@ -1,27 +1,68 @@
-import { Link } from 'react-router-dom';
+import DesignGrid from '../components/Profile/DesignGrid';
+import ProfileHeader from '../components/Profile/ProfileHeader';
+import ProfileInfo from '../components/Profile/ProfileInfo';
+import ProfileStats from '../components/Profile/ProfileStats';
+import ProfileTabs from '../components/Profile/ProfileTabs';
+import LeftSidebar from '../components/Sidebar/LeftSidebar';
+import { useDesignGrid } from '../hooks/useDesignGrid';
+import { useProfile } from '../hooks/useProfile';
+import '../styles/ProfilePage.css';
 
-import '../styles/FeedPage.css';
+const EditProfileModal = ({ onClose }: { onClose: () => void }) => {
+  return (
+    <div className="profile-modal-backdrop" role="dialog" aria-modal="true" aria-label="Edit profile modal">
+      <div className="profile-modal">
+        <h2>Edit Profile</h2>
+        <p>This is a preview-only modal. Save behavior is intentionally not implemented.</p>
+        <button type="button" className="profile-primary-btn" onClick={onClose}>
+          Close
+        </button>
+      </div>
+    </div>
+  );
+};
 
 const ProfilePage = () => {
+  const {
+    user,
+    isFollowing,
+    followersCount,
+    followingCount,
+    completionPercent,
+    isProfileComplete,
+    toggleFollow,
+    isEditModalOpen,
+    openEditModal,
+    closeEditModal
+  } = useProfile();
+  const { activeTab, displayedDesigns, myDesignCount, savedDesignCount, setActiveTab, toggleLike } = useDesignGrid();
+
   return (
-    <main
-      style={{
-        minHeight: '100vh',
-        display: 'grid',
-        placeItems: 'center',
-        padding: '24px'
-      }}
-    >
-      <section className="feed-panel" style={{ maxWidth: 520, width: '100%' }}>
-        <h1 style={{ marginTop: 0 }}>Profile Page</h1>
-        <p style={{ color: 'var(--feed-muted)' }}>
-          This page is a placeholder route and can be implemented next.
-        </p>
-        <Link to="/feed" className="feed-link-button" style={{ marginTop: 4, display: 'inline-block' }}>
-          Back to Feed
-        </Link>
-      </section>
-    </main>
+    <div className="profile-layout">
+      <LeftSidebar />
+      <main className="profile-main">
+        <div className="profile-content">
+          <ProfileHeader user={user} onOpenEdit={openEditModal} />
+          <ProfileInfo
+            user={user}
+            isFollowing={isFollowing}
+            completionPercent={completionPercent}
+            isProfileComplete={isProfileComplete}
+            onToggleFollow={toggleFollow}
+            onOpenEdit={openEditModal}
+          />
+          <ProfileStats postsCount={user.postsCount} followersCount={followersCount} followingCount={followingCount} />
+          <ProfileTabs
+            activeTab={activeTab}
+            myDesignCount={myDesignCount}
+            savedDesignCount={savedDesignCount}
+            onTabChange={setActiveTab}
+          />
+          <DesignGrid designs={displayedDesigns} activeTab={activeTab} onToggleLike={toggleLike} />
+        </div>
+      </main>
+      {isEditModalOpen ? <EditProfileModal onClose={closeEditModal} /> : null}
+    </div>
   );
 };
 
