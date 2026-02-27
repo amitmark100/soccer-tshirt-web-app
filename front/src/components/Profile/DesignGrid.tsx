@@ -1,15 +1,14 @@
-import { Design, ProfileTab } from '../../types';
+import { Design } from '../../types';
 import DesignCard from './DesignCard';
 
 interface DesignGridProps {
   designs: Design[];
-  activeTab: ProfileTab;
   onToggleLike: (designId: string) => void;
 }
 
-const DesignGrid = ({ designs, activeTab, onToggleLike }: DesignGridProps) => {
+const DesignGrid = ({ designs, onToggleLike }: DesignGridProps) => {
   return (
-    <section className={`profile-design-grid-wrap ${activeTab}`}>
+    <section className="profile-design-grid-wrap">
       <div className="profile-design-grid">
         {designs.map((design) => (
           <DesignCard key={design.id} design={design} onToggleLike={onToggleLike} />

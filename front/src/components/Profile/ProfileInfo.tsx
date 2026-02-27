@@ -6,10 +6,8 @@ import { formatJoinDate } from '../../utils/formatters';
 
 interface ProfileInfoProps {
   user: User;
-  isFollowing: boolean;
   completionPercent: number;
   isProfileComplete: boolean;
-  onToggleFollow: () => void;
   onOpenEdit: () => void;
 }
 
@@ -21,10 +19,8 @@ const VerifiedBadge = () => (
 
 const ProfileInfo = ({
   user,
-  isFollowing,
   completionPercent,
   isProfileComplete,
-  onToggleFollow,
   onOpenEdit
 }: ProfileInfoProps) => {
   return (
@@ -37,13 +33,6 @@ const ProfileInfo = ({
         <div className="profile-actions">
           <button type="button" className="profile-outline-btn" onClick={onOpenEdit}>
             Edit Profile
-          </button>
-          <button
-            type="button"
-            className={`profile-primary-btn ${isFollowing ? 'active' : ''}`}
-            onClick={onToggleFollow}
-          >
-            {isFollowing ? 'Following' : 'Follow'}
           </button>
         </div>
       </div>
