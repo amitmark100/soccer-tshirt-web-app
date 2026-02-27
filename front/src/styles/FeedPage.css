@@ -50,6 +50,7 @@ body {
   margin: 0 0 28px;
   font-size: 2rem;
   letter-spacing: 0.3px;
+  color: white
 }
 
 .feed-nav {
@@ -166,6 +167,20 @@ body {
   margin-bottom: 12px;
 }
 
+.feed-owner-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.feed-delete-btn {
+  color: #ff7f96;
+}
+
+.feed-delete-btn:hover {
+  color: #ff9aae;
+}
+
 .feed-post-user {
   display: flex;
   align-items: center;
@@ -269,6 +284,23 @@ button.feed-stat:hover {
   margin-top: 10px;
 }
 
+.feed-preview-trigger {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.feed-preview-trigger .feed-post-image {
+  transition: transform 0.24s ease;
+}
+
+.feed-preview-trigger:hover .feed-post-image {
+  transform: scale(1.01);
+}
+
 .feed-post-copy h3 {
   margin: 0;
   font-size: 1.16rem;
@@ -367,6 +399,67 @@ button.feed-stat:hover {
 .feed-post-button:disabled {
   opacity: 0.45;
   cursor: not-allowed;
+}
+
+.feed-edit-post-form {
+  display: grid;
+  gap: 10px;
+}
+
+.feed-edit-post-form h3 {
+  margin: 0;
+}
+
+.feed-form-field {
+  display: grid;
+  gap: 6px;
+}
+
+.feed-form-field span {
+  color: var(--feed-muted);
+  font-size: 0.88rem;
+}
+
+.feed-form-field input,
+.feed-form-field textarea {
+  width: 100%;
+  border: 1px solid var(--feed-border);
+  background: #0a1224;
+  color: #fff;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font: inherit;
+}
+
+.feed-form-field input:focus,
+.feed-form-field textarea:focus {
+  outline: none;
+  border-color: rgba(59, 130, 246, 0.85);
+}
+
+.feed-post-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.feed-cancel-btn,
+.feed-save-btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.feed-cancel-btn {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.feed-save-btn {
+  background: var(--feed-blue);
+  color: #fff;
 }
 
 .feed-right-sidebar {

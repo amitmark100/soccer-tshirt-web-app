@@ -1,10 +1,16 @@
+import { FormEvent, useState } from 'react';
+
 import { Post as PostType } from '../../types/types';
 import CommentSection from './CommentSection';
 
 interface PostProps {
   post: PostType;
+  currentUserId: string;
+  onOpenPreview: (post: PostType) => void;
   onToggleLike: (postId: string) => void;
   onAddComment: (postId: string, commentText: string) => void;
+  onEditPost: (postId: string, input: { title: string; description: string; designImage: string }) => void;
+  onDeletePost: (postId: string) => void;
 }
 
 const VerifiedBadge = () => (
@@ -40,7 +46,56 @@ const formatCompactCount = (count: number): string => {
   return count.toString();
 };
 
-const Post = ({ post, onToggleLike, onAddComment }: PostProps) => {
+const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, onEditPost, onDeletePost }: PostProps) => {
+  const [isEditing, setIsEditing] = useState<boolean>(false);
+  const [title, setTitle] = useState<string>(post.title);
+  const [description, setDescription] = useState<string>(post.description);
+  const [designImage, setDesignImage] = useState<string>(post.designImage);
+  const isPostOwner = post.userId === currentUserId;
+
+  const handleEditSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    onEditPost(post.id, { title, description, designImage });
+    setIsEditing(false);
+  };
+
+  const handleStartEdit = () => {
+    setTitle(post.title);
+    setDescription(post.description);
+    setDesignImage(post.designImage);
+    setIsEditing(true);
+  };
+
+  if (isEditing) {
+    return (
+      <article className="feed-post-card">
+        <form className="feed-edit-post-form" onSubmit={handleEditSubmit}>
+          <h3>Edit Post</h3>
+          <label className="feed-form-field">
+            <span>Title</span>
+            <input value={title} onChange={(event) => setTitle(event.target.value)} required />
+          </label>
+          <label className="feed-form-field">
+            <span>Description</span>
+            <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} required />
+          </label>
+          <label className="feed-form-field">
+            <span>Image URL</span>
+            <input value={designImage} onChange={(event) => setDesignImage(event.target.value)} required />
+          </label>
+          <div className="feed-post-actions">
+            <button type="button" className="feed-cancel-btn" onClick={() => setIsEditing(false)}>
+              Cancel
+            </button>
+            <button type="submit" className="feed-save-btn">
+              Save
+            </button>
+          </div>
+        </form>
+      </article>
+    );
+  }
+
   return (
     <article className="feed-post-card">
       <header className="feed-post-header">
@@ -54,9 +109,21 @@ const Post = ({ post, onToggleLike, onAddComment }: PostProps) => {
             <span className="feed-post-time">{post.timestamp}</span>
           </div>
         </div>
+        {isPostOwner ? (
+          <div className="feed-owner-actions">
+            <button type="button" className="feed-link-button" onClick={handleStartEdit}>
+              Edit
+            </button>
+            <button type="button" className="feed-link-button feed-delete-btn" onClick={() => onDeletePost(post.id)}>
+              Delete
+            </button>
+          </div>
+        ) : null}
       </header>
 
-      <img src={post.designImage} alt={post.title} className="feed-post-image" />
+      <button type="button" className="feed-preview-trigger" onClick={() => onOpenPreview(post)} aria-label="Open post preview">
+        <img src={post.designImage} alt={post.title} className="feed-post-image" />
+      </button>
 
       <div className="feed-post-stats">
         <button
@@ -75,10 +142,10 @@ const Post = ({ post, onToggleLike, onAddComment }: PostProps) => {
         </div>
       </div>
 
-      <div className="feed-post-copy">
+      <button type="button" className="feed-post-copy feed-preview-trigger" onClick={() => onOpenPreview(post)} aria-label="Open post preview">
         <h3>{post.title}</h3>
         <p>{post.description}</p>
-      </div>
+      </button>
 
       <CommentSection
         postId={post.id}

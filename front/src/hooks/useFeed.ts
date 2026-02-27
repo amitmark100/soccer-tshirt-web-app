@@ -1,7 +1,7 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 
 import { Post } from '../types/types';
-import { posts as initialPosts } from '../utils/mockData';
+import { useAppData } from '../context/AppDataContext';
 
 interface UseFeedReturn {
   posts: Post[];
@@ -9,13 +9,16 @@ interface UseFeedReturn {
   hasMore: boolean;
   toggleLike: (postId: string) => void;
   addComment: (postId: string, commentText: string) => void;
+  editPost: (postId: string, input: { title: string; description: string; designImage: string }) => void;
+  deletePost: (postId: string) => void;
+  currentUserId: string;
   loadMore: () => void;
 }
 
 const PAGE_SIZE = 2;
 
 export const useFeed = (): UseFeedReturn => {
-  const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const { posts, toggleLike, addComment, editPost, deletePost, currentUserId } = useAppData();
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
 
   const hasMore = visibleCount < posts.length;
@@ -24,59 +27,11 @@ export const useFeed = (): UseFeedReturn => {
     return posts.slice(0, visibleCount);
   }, [posts, visibleCount]);
 
-  const toggleLike = useCallback((postId: string) => {
-    setPosts((currentPosts) => {
-      return currentPosts.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-
-        const nextLiked = !post.isLiked;
-
-        return {
-          ...post,
-          isLiked: nextLiked,
-          likes: post.likes + (nextLiked ? 1 : -1)
-        };
-      });
-    });
-  }, []);
-
-  const addComment = useCallback((postId: string, commentText: string) => {
-    const trimmedComment = commentText.trim();
-
-    if (!trimmedComment) {
-      return;
-    }
-
-    setPosts((currentPosts) => {
-      return currentPosts.map((post) => {
-        if (post.id !== postId) {
-          return post;
-        }
-
-        const newComment = {
-          id: `comment-${Date.now()}-${Math.random().toString(16).slice(2)}`,
-          userId: 'current-user',
-          username: 'you',
-          text: trimmedComment,
-          userAvatar: 'https://images.unsplash.com/photo-1527980965255-d3b416303d12?auto=format&fit=crop&w=80&q=80'
-        };
-
-        return {
-          ...post,
-          comments: [...post.comments, newComment],
-          totalComments: post.totalComments + 1
-        };
-      });
-    });
-  }, []);
-
-  const loadMore = useCallback(() => {
+  const loadMore = () => {
     setVisibleCount((currentCount) => {
       return Math.min(currentCount + PAGE_SIZE, posts.length);
     });
-  }, [posts.length]);
+  };
 
   return {
     posts,
@@ -84,6 +39,9 @@ export const useFeed = (): UseFeedReturn => {
     hasMore,
     toggleLike,
     addComment,
+    editPost,
+    deletePost,
+    currentUserId,
     loadMore
   };
 };

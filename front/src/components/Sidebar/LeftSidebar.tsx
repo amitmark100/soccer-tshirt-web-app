@@ -52,9 +52,9 @@ const LeftSidebar = () => {
           <a href="#" className="feed-nav-item">
             <ExploreIcon /> Explore
           </a>
-          <a href="#" className="feed-nav-item">
+          <NavLink to="/create" className={navClassName}>
             <CreateIcon /> Create
-          </a>
+          </NavLink>
           <NavLink to="/profile" className={navClassName}>
             <ProfileIcon /> Profile
           </NavLink>
