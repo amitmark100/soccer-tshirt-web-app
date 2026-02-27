@@ -5,6 +5,7 @@ import ProfileHeader from '../components/Profile/ProfileHeader';
 import ProfileInfo from '../components/Profile/ProfileInfo';
 import ProfileStats from '../components/Profile/ProfileStats';
 import LeftSidebar from '../components/Sidebar/LeftSidebar';
+import { useAppData } from '../context/AppDataContext';
 import { useDesignGrid } from '../hooks/useDesignGrid';
 import { useProfile } from '../hooks/useProfile';
 import { User } from '../types';
@@ -86,6 +87,29 @@ const ProfilePage = () => {
     closeEditModal
   } = useProfile();
   const { designs, toggleLike } = useDesignGrid();
+  const { posts, currentUserId, toggleLike: togglePostLike } = useAppData();
+  const userPosts = posts.filter((post) => post.userId === currentUserId);
+  const postsCount = userPosts.length;
+  const profilePostDesigns = userPosts.map((post) => ({
+    id: `profile-post-${post.id}`,
+    title: post.title,
+    image: post.designImage,
+    likes: post.likes,
+    views: Math.max(300, post.totalComments * 25 + post.likes * 2),
+    isLiked: post.isLiked,
+    createdAt: post.timestamp,
+    description: post.description
+  }));
+  const combinedDesigns = [...profilePostDesigns, ...designs];
+
+  const handleDesignLike = (designId: string) => {
+    if (designId.startsWith('profile-post-')) {
+      togglePostLike(designId.replace('profile-post-', ''));
+      return;
+    }
+
+    toggleLike(designId);
+  };
 
   return (
     <div className="profile-layout">
@@ -99,8 +123,8 @@ const ProfilePage = () => {
             isProfileComplete={isProfileComplete}
             onOpenEdit={openEditModal}
           />
-          <ProfileStats postsCount={user.postsCount} />
-          <DesignGrid designs={designs} onToggleLike={toggleLike} />
+          <ProfileStats postsCount={postsCount} />
+          <DesignGrid designs={combinedDesigns} onToggleLike={handleDesignLike} />
         </div>
       </main>
       {isEditModalOpen ? <EditProfileModal user={user} onSave={saveProfile} onClose={closeEditModal} /> : null}

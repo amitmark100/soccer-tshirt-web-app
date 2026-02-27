@@ -9,7 +9,7 @@ import '../styles/FeedPage.css';
 const FeedPage = () => {
   const [searchValue, setSearchValue] = useState<string>('');
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const { posts, visiblePosts, hasMore, toggleLike, addComment, loadMore } = useFeed();
+  const { posts, visiblePosts, hasMore, toggleLike, addComment, editPost, deletePost, currentUserId, loadMore } = useFeed();
 
   useEffect(() => {
     if (!loadMoreRef.current || !hasMore) {
@@ -60,7 +60,15 @@ const FeedPage = () => {
 
         <section className="feed-posts" aria-label="Design feed">
           {filteredPosts.map((post) => (
-            <Post key={post.id} post={post} onToggleLike={toggleLike} onAddComment={addComment} />
+            <Post
+              key={post.id}
+              post={post}
+              currentUserId={currentUserId}
+              onToggleLike={toggleLike}
+              onAddComment={addComment}
+              onEditPost={editPost}
+              onDeletePost={deletePost}
+            />
           ))}
 
           {hasMore ? (
