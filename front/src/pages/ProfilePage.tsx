@@ -1,9 +1,8 @@
-import React from 'react';
 import { Link } from 'react-router-dom';
 
 import '../styles/FeedPage.css';
 
-const ProfilePage: React.FC = () => {
+const ProfilePage = () => {
   return (
     <main
       style={{

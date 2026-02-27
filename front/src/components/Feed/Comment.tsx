@@ -1,12 +1,10 @@
-import React from 'react';
-
 import { Comment as CommentType } from '../../types/types';
 
 interface CommentProps {
   comment: CommentType;
 }
 
-const Comment: React.FC<CommentProps> = ({ comment }) => {
+const Comment = ({ comment }: CommentProps) => {
   return (
     <div className="feed-comment">
       <img src={comment.userAvatar} alt={comment.username} className="feed-comment-avatar" />

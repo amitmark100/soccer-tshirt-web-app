@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 import Post from '../components/Feed/Post';
 import LeftSidebar from '../components/Sidebar/LeftSidebar';
@@ -6,7 +6,7 @@ import RightSidebar from '../components/Sidebar/RightSidebar';
 import { useFeed } from '../hooks/useFeed';
 import '../styles/FeedPage.css';
 
-const FeedPage: React.FC = () => {
+const FeedPage = () => {
   const [searchValue, setSearchValue] = useState<string>('');
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { posts, visiblePosts, hasMore, toggleLike, addComment, loadMore } = useFeed();

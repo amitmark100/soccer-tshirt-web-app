@@ -1,11 +1,10 @@
-import React from 'react';
 import { Navigate, Route, Routes } from 'react-router-dom';
 
 import FeedPage from './pages/FeedPage';
 import AuthPage from './pages/AuthPage';
 import ProfilePage from './pages/ProfilePage';
 
-const App: React.FC = () => {
+const App = () => {
   return (
     <Routes>
       <Route path="/" element={<Navigate to="/auth" replace />} />

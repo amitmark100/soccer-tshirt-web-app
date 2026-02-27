@@ -1,4 +1,4 @@
-import React, { FormEvent, useState } from 'react';
+import { FormEvent, useState } from 'react';
 
 import { Comment as CommentType } from '../../types/types';
 import Comment from './Comment';
@@ -10,12 +10,12 @@ interface CommentSectionProps {
   onAddComment: (postId: string, commentText: string) => void;
 }
 
-const CommentSection: React.FC<CommentSectionProps> = ({
+const CommentSection = ({
   postId,
   comments,
   totalComments,
   onAddComment
-}) => {
+}: CommentSectionProps) => {
   const [commentValue, setCommentValue] = useState<string>('');
 
   const visibleComments = comments.slice(-3);

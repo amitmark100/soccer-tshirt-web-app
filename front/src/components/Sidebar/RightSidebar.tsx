@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import { useMemo } from 'react';
 
 import SuggestedUsers from '../Suggestions/SuggestedUsers';
 import TrendingDesigns from '../Suggestions/TrendingDesigns';
@@ -9,7 +9,7 @@ interface RightSidebarProps {
   posts: Post[];
 }
 
-const RightSidebar: React.FC<RightSidebarProps> = ({ posts }) => {
+const RightSidebar = ({ posts }: RightSidebarProps) => {
   const topRatedUsers = useMemo<TopRatedUser[]>(() => {
     const usersById = new Map<string, TopRatedUser>();
 

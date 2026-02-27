@@ -1,5 +1,3 @@
-import React from 'react';
-
 import { TopRatedUser } from '../../types/types';
 
 interface SuggestedUsersProps {
@@ -14,7 +12,7 @@ const formatCompactCount = (count: number): string => {
   return count.toString();
 };
 
-const SuggestedUsers: React.FC<SuggestedUsersProps> = ({ users }) => {
+const SuggestedUsers = ({ users }: SuggestedUsersProps) => {
   return (
     <section className="feed-panel">
       <div className="feed-panel-header">
