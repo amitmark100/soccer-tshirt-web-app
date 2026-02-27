@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import AuthLayout from '../layouts/AuthLayout';
 import Login from '../components/Login';
 import SignUp from '../components/SignUp';
 
-const AuthPage: React.FC = () => {
+const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true);
 
   return (

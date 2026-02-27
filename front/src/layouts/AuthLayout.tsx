@@ -1,11 +1,11 @@
-import React from 'react';
+import { ReactNode } from 'react';
 import backgroundImage from '../assets/soccer-background.jpg';
 
 interface AuthLayoutProps {
-  children: React.ReactNode;
+  children: ReactNode;
 }
 
-const AuthLayout: React.FC<AuthLayoutProps> = ({ children }) => {
+const AuthLayout = ({ children }: AuthLayoutProps) => {
   return (
     <div
       className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8"
