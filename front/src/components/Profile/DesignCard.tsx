@@ -7,12 +7,25 @@ import { formatCompactCount } from '../../utils/formatters';
 interface DesignCardProps {
   design: Design;
   onToggleLike: (designId: string) => void;
+  canManage?: boolean;
+  onEdit?: (designId: string) => void;
+  onDelete?: (designId: string) => void;
 }
 
-const DesignCard = ({ design, onToggleLike }: DesignCardProps) => {
+const DesignCard = ({ design, onToggleLike, canManage = false, onEdit, onDelete }: DesignCardProps) => {
   return (
     <article className="profile-design-card">
       <img src={design.image} alt={design.title} className="profile-design-image" />
+      {canManage ? (
+        <div className="profile-design-actions">
+          <button type="button" onClick={() => onEdit?.(design.id)}>
+            Edit
+          </button>
+          <button type="button" className="danger" onClick={() => onDelete?.(design.id)}>
+            Delete
+          </button>
+        </div>
+      ) : null}
       <div className="profile-design-overlay">
         <h3>{design.title}</h3>
         <p>{design.description}</p>

@@ -6,7 +6,6 @@ import ProfileInfo from '../components/Profile/ProfileInfo';
 import ProfileStats from '../components/Profile/ProfileStats';
 import LeftSidebar from '../components/Sidebar/LeftSidebar';
 import { useAppData } from '../context/AppDataContext';
-import { useDesignGrid } from '../hooks/useDesignGrid';
 import { useProfile } from '../hooks/useProfile';
 import { User } from '../types';
 import '../styles/ProfilePage.css';
@@ -86,8 +85,13 @@ const ProfilePage = () => {
     openEditModal,
     closeEditModal
   } = useProfile();
-  const { designs, toggleLike } = useDesignGrid();
-  const { posts, currentUserId, toggleLike: togglePostLike } = useAppData();
+  const { posts, currentUserId, toggleLike: togglePostLike, editPost, deletePost } = useAppData();
+  const [editingPost, setEditingPost] = useState<{
+    postId: string;
+    title: string;
+    description: string;
+    designImage: string;
+  } | null>(null);
   const userPosts = posts.filter((post) => post.userId === currentUserId);
   const postsCount = userPosts.length;
   const profilePostDesigns = userPosts.map((post) => ({
@@ -100,15 +104,56 @@ const ProfilePage = () => {
     createdAt: post.timestamp,
     description: post.description
   }));
-  const combinedDesigns = [...profilePostDesigns, ...designs];
-
   const handleDesignLike = (designId: string) => {
     if (designId.startsWith('profile-post-')) {
       togglePostLike(designId.replace('profile-post-', ''));
+    }
+  };
+
+  const canManageProfileDesign = (designId: string) => designId.startsWith('profile-post-');
+
+  const handleEditDesign = (designId: string) => {
+    if (!designId.startsWith('profile-post-')) {
       return;
     }
 
-    toggleLike(designId);
+    const postId = designId.replace('profile-post-', '');
+    const post = posts.find((currentPost) => currentPost.id === postId);
+
+    if (!post) {
+      return;
+    }
+
+    setEditingPost({
+      postId,
+      title: post.title,
+      description: post.description,
+      designImage: post.designImage
+    });
+  };
+
+  const handleDeleteDesign = (designId: string) => {
+    if (!designId.startsWith('profile-post-')) {
+      return;
+    }
+
+    const postId = designId.replace('profile-post-', '');
+    deletePost(postId);
+  };
+
+  const handleSaveEditedPost = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!editingPost) {
+      return;
+    }
+
+    editPost(editingPost.postId, {
+      title: editingPost.title,
+      description: editingPost.description,
+      designImage: editingPost.designImage
+    });
+    setEditingPost(null);
   };
 
   return (
@@ -124,10 +169,64 @@ const ProfilePage = () => {
             onOpenEdit={openEditModal}
           />
           <ProfileStats postsCount={postsCount} />
-          <DesignGrid designs={combinedDesigns} onToggleLike={handleDesignLike} />
+          <DesignGrid
+            designs={profilePostDesigns}
+            onToggleLike={handleDesignLike}
+            canManageDesign={canManageProfileDesign}
+            onEditDesign={handleEditDesign}
+            onDeleteDesign={handleDeleteDesign}
+          />
         </div>
       </main>
       {isEditModalOpen ? <EditProfileModal user={user} onSave={saveProfile} onClose={closeEditModal} /> : null}
+      {editingPost ? (
+        <div className="profile-modal-backdrop" role="dialog" aria-modal="true" aria-label="Edit post modal">
+          <form className="profile-modal" onSubmit={handleSaveEditedPost}>
+            <h2>Edit Post</h2>
+            <div className="profile-form-grid">
+              <label className="profile-form-field">
+                <span>Title</span>
+                <input
+                  value={editingPost.title}
+                  onChange={(event) =>
+                    setEditingPost((current) => (current ? { ...current, title: event.target.value } : null))
+                  }
+                  required
+                />
+              </label>
+              <label className="profile-form-field">
+                <span>Description</span>
+                <textarea
+                  rows={3}
+                  value={editingPost.description}
+                  onChange={(event) =>
+                    setEditingPost((current) => (current ? { ...current, description: event.target.value } : null))
+                  }
+                  required
+                />
+              </label>
+              <label className="profile-form-field">
+                <span>Image URL</span>
+                <input
+                  value={editingPost.designImage}
+                  onChange={(event) =>
+                    setEditingPost((current) => (current ? { ...current, designImage: event.target.value } : null))
+                  }
+                  required
+                />
+              </label>
+            </div>
+            <div className="profile-modal-actions">
+              <button type="button" className="profile-outline-btn" onClick={() => setEditingPost(null)}>
+                Cancel
+              </button>
+              <button type="submit" className="profile-primary-btn">
+                Save Post
+              </button>
+            </div>
+          </form>
+        </div>
+      ) : null}
     </div>
   );
 };
