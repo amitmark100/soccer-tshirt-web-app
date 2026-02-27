@@ -321,6 +321,15 @@ body {
   transition: transform 0.28s ease;
 }
 
+.profile-preview-trigger {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
 .profile-design-overlay {
   position: absolute;
   left: 0;

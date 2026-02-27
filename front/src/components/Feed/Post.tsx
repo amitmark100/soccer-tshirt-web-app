@@ -6,6 +6,7 @@ import CommentSection from './CommentSection';
 interface PostProps {
   post: PostType;
   currentUserId: string;
+  onOpenPreview: (post: PostType) => void;
   onToggleLike: (postId: string) => void;
   onAddComment: (postId: string, commentText: string) => void;
   onEditPost: (postId: string, input: { title: string; description: string; designImage: string }) => void;
@@ -45,7 +46,7 @@ const formatCompactCount = (count: number): string => {
   return count.toString();
 };
 
-const Post = ({ post, currentUserId, onToggleLike, onAddComment, onEditPost, onDeletePost }: PostProps) => {
+const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, onEditPost, onDeletePost }: PostProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
   const [title, setTitle] = useState<string>(post.title);
   const [description, setDescription] = useState<string>(post.description);
@@ -120,7 +121,9 @@ const Post = ({ post, currentUserId, onToggleLike, onAddComment, onEditPost, onD
         ) : null}
       </header>
 
-      <img src={post.designImage} alt={post.title} className="feed-post-image" />
+      <button type="button" className="feed-preview-trigger" onClick={() => onOpenPreview(post)} aria-label="Open post preview">
+        <img src={post.designImage} alt={post.title} className="feed-post-image" />
+      </button>
 
       <div className="feed-post-stats">
         <button
@@ -139,10 +142,10 @@ const Post = ({ post, currentUserId, onToggleLike, onAddComment, onEditPost, onD
         </div>
       </div>
 
-      <div className="feed-post-copy">
+      <button type="button" className="feed-post-copy feed-preview-trigger" onClick={() => onOpenPreview(post)} aria-label="Open post preview">
         <h3>{post.title}</h3>
         <p>{post.description}</p>
-      </div>
+      </button>
 
       <CommentSection
         postId={post.id}

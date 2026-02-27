@@ -1,5 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 
+import PostPreviewModal from '../components/Common/PostPreviewModal';
 import DesignGrid from '../components/Profile/DesignGrid';
 import ProfileHeader from '../components/Profile/ProfileHeader';
 import ProfileInfo from '../components/Profile/ProfileInfo';
@@ -7,7 +8,7 @@ import ProfileStats from '../components/Profile/ProfileStats';
 import LeftSidebar from '../components/Sidebar/LeftSidebar';
 import { useAppData } from '../context/AppDataContext';
 import { useProfile } from '../hooks/useProfile';
-import { User } from '../types';
+import { Design, User } from '../types';
 import '../styles/ProfilePage.css';
 
 interface EditProfileModalProps {
@@ -92,6 +93,7 @@ const ProfilePage = () => {
     description: string;
     designImage: string;
   } | null>(null);
+  const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
   const userPosts = posts.filter((post) => post.userId === currentUserId);
   const postsCount = userPosts.length;
   const profilePostDesigns = userPosts.map((post) => ({
@@ -171,6 +173,7 @@ const ProfilePage = () => {
           <ProfileStats postsCount={postsCount} />
           <DesignGrid
             designs={profilePostDesigns}
+            onOpenPreview={setSelectedDesign}
             onToggleLike={handleDesignLike}
             canManageDesign={canManageProfileDesign}
             onEditDesign={handleEditDesign}
@@ -227,6 +230,18 @@ const ProfilePage = () => {
           </form>
         </div>
       ) : null}
+      <PostPreviewModal
+        isOpen={Boolean(selectedDesign)}
+        title={selectedDesign?.title ?? ''}
+        description={selectedDesign?.description ?? ''}
+        image={selectedDesign?.image ?? ''}
+        creatorLabel={`@${user.name.toLowerCase().replace(/\s+/g, '')}`}
+        timestamp={selectedDesign?.createdAt ?? ''}
+        likes={selectedDesign?.likes ?? 0}
+        secondaryMetricLabel="views"
+        secondaryMetricValue={selectedDesign?.views ?? 0}
+        onClose={() => setSelectedDesign(null)}
+      />
     </div>
   );
 };

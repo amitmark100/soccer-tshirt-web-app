@@ -3,13 +3,14 @@ import DesignCard from './DesignCard';
 
 interface DesignGridProps {
   designs: Design[];
+  onOpenPreview: (design: Design) => void;
   onToggleLike: (designId: string) => void;
   canManageDesign?: (designId: string) => boolean;
   onEditDesign?: (designId: string) => void;
   onDeleteDesign?: (designId: string) => void;
 }
 
-const DesignGrid = ({ designs, onToggleLike, canManageDesign, onEditDesign, onDeleteDesign }: DesignGridProps) => {
+const DesignGrid = ({ designs, onOpenPreview, onToggleLike, canManageDesign, onEditDesign, onDeleteDesign }: DesignGridProps) => {
   return (
     <section className="profile-design-grid-wrap">
       <div className="profile-design-grid">
@@ -17,6 +18,7 @@ const DesignGrid = ({ designs, onToggleLike, canManageDesign, onEditDesign, onDe
           <DesignCard
             key={design.id}
             design={design}
+            onOpenPreview={onOpenPreview}
             onToggleLike={onToggleLike}
             canManage={canManageDesign ? canManageDesign(design.id) : false}
             onEdit={onEditDesign}

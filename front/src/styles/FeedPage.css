@@ -284,6 +284,23 @@ button.feed-stat:hover {
   margin-top: 10px;
 }
 
+.feed-preview-trigger {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  width: 100%;
+  text-align: left;
+  cursor: pointer;
+}
+
+.feed-preview-trigger .feed-post-image {
+  transition: transform 0.24s ease;
+}
+
+.feed-preview-trigger:hover .feed-post-image {
+  transform: scale(1.01);
+}
+
 .feed-post-copy h3 {
   margin: 0;
   font-size: 1.16rem;

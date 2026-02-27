@@ -1,13 +1,16 @@
 import { useEffect, useRef, useState } from 'react';
 
 import Post from '../components/Feed/Post';
+import PostPreviewModal from '../components/Common/PostPreviewModal';
 import LeftSidebar from '../components/Sidebar/LeftSidebar';
 import RightSidebar from '../components/Sidebar/RightSidebar';
 import { useFeed } from '../hooks/useFeed';
+import { Post as PostType } from '../types/types';
 import '../styles/FeedPage.css';
 
 const FeedPage = () => {
   const [searchValue, setSearchValue] = useState<string>('');
+  const [selectedPost, setSelectedPost] = useState<PostType | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
   const { posts, visiblePosts, hasMore, toggleLike, addComment, editPost, deletePost, currentUserId, loadMore } = useFeed();
 
@@ -64,6 +67,7 @@ const FeedPage = () => {
               key={post.id}
               post={post}
               currentUserId={currentUserId}
+              onOpenPreview={setSelectedPost}
               onToggleLike={toggleLike}
               onAddComment={addComment}
               onEditPost={editPost}
@@ -82,6 +86,18 @@ const FeedPage = () => {
       </main>
 
       <RightSidebar posts={posts} />
+      <PostPreviewModal
+        isOpen={Boolean(selectedPost)}
+        title={selectedPost?.title ?? ''}
+        description={selectedPost?.description ?? ''}
+        image={selectedPost?.designImage ?? ''}
+        creatorLabel={selectedPost ? `@${selectedPost.username}` : ''}
+        timestamp={selectedPost?.timestamp ?? ''}
+        likes={selectedPost?.likes ?? 0}
+        secondaryMetricLabel="comments"
+        secondaryMetricValue={selectedPost?.totalComments ?? 0}
+        onClose={() => setSelectedPost(null)}
+      />
     </div>
   );
 };

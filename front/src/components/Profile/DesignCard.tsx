@@ -6,16 +6,19 @@ import { formatCompactCount } from '../../utils/formatters';
 
 interface DesignCardProps {
   design: Design;
+  onOpenPreview: (design: Design) => void;
   onToggleLike: (designId: string) => void;
   canManage?: boolean;
   onEdit?: (designId: string) => void;
   onDelete?: (designId: string) => void;
 }
 
-const DesignCard = ({ design, onToggleLike, canManage = false, onEdit, onDelete }: DesignCardProps) => {
+const DesignCard = ({ design, onOpenPreview, onToggleLike, canManage = false, onEdit, onDelete }: DesignCardProps) => {
   return (
     <article className="profile-design-card">
-      <img src={design.image} alt={design.title} className="profile-design-image" />
+      <button type="button" className="profile-preview-trigger" onClick={() => onOpenPreview(design)} aria-label="Open post preview">
+        <img src={design.image} alt={design.title} className="profile-design-image" />
+      </button>
       {canManage ? (
         <div className="profile-design-actions">
           <button type="button" onClick={() => onEdit?.(design.id)}>
@@ -26,10 +29,10 @@ const DesignCard = ({ design, onToggleLike, canManage = false, onEdit, onDelete 
           </button>
         </div>
       ) : null}
-      <div className="profile-design-overlay">
+      <button type="button" className="profile-design-overlay profile-preview-trigger" onClick={() => onOpenPreview(design)} aria-label="Open post preview">
         <h3>{design.title}</h3>
         <p>{design.description}</p>
-      </div>
+      </button>
       <div className="profile-design-stats">
         <button
           type="button"
