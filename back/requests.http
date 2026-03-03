@@ -1,0 +1,345 @@
+### ============================================
+### SOCCER JERSEY STORE API - FULL TEST SUITE
+### ============================================
+### Base URL: http://localhost:5000
+### Format: REST Client (VS Code Extension)
+### ============================================
+###
+### IMPORTANT NOTES:
+### - All POST/PUT/DELETE requests require Bearer token from Login
+### - When creating posts: ONLY send text + jerseyDetails (user auto-filled from token)
+### - When creating comments: ONLY send postId + content (author auto-filled from token)
+### - Update user profile to trigger middleware sync across posts/comments
+###
+### ============================================
+
+###
+### AUTHENTICATION ENDPOINTS
+###
+
+### Register a new user account
+# Creates a new user with username, email, and password
+# Response includes JWT token and user data (_id, username, email)
+# This token is required for all protected endpoints below
+POST http://localhost:5000/api/auth/register
+Content-Type: application/json
+
+{
+  "username": "soccerfan2",
+  "email": "soccerfan2@example.com",
+  "password": "SecurePass123"
+}
+
+###
+
+### Login with existing user credentials
+# Authenticates user and returns JWT token for protected requests
+# Copy the token from response and replace YOUR_JWT_TOKEN_HERE in requests below
+# Token expires in 1 hour
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "soccerfan@example.com",
+  "password": "SecurePass123"
+}
+
+###
+### POST ENDPOINTS (Jersey Listings)
+###
+
+### Get all posts
+# Fetches all jersey posts from the database
+# Returns array with user info (sub-schema), jerseyDetails, likes array, commentsCount
+# Includes timestamps (createdAt, updatedAt) for paging support
+GET http://localhost:5000/api/post
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+###
+
+### Get single post by ID
+# Retrieves a specific post with all details including user, jersey, and engagement metrics
+# Replace :postId with actual MongoDB ObjectId from created post response
+GET http://localhost:5000/api/post/69a15a2845b0b600727113ea
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+
+###
+
+### Create a new jersey post
+# Creates a post with text description, optional image, and full jerseyDetails object
+# jerseyDetails MUST include: team, league, price (Number), size (XS/S/M/L/XL/XXL), imageUrl
+# User sub-schema is automatically embedded from JWT token - you only provide text and jerseyDetails!
+POST http://localhost:5000/api/post
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Content-Type: application/json
+
+{
+  "text": "Selling authentic Manchester United 2023-24 season jersey. Excellent condition, never worn. Original tags still attached.",
+  "image": "/uploads/post-photos/manchester-united-2024.jpg",
+  "jerseyDetails": {
+    "team": "Manchester United",
+    "league": "Premier League",
+    "price": 89.99,
+    "size": "L",
+    "imageUrl": "/uploads/jerseys/manchester-united-2024.jpg"
+  }
+}
+
+###
+
+### Update an existing post
+# Modifies post content, image, and/or jersey details by ID
+# Only the original post creator can update their post
+# REPLACE :postId with actual post MongoDB ObjectId (remove the colon!)
+# Example: PUT http://localhost:5000/api/post/69a15a2845b0b600727113ea
+PUT http://localhost:5000/api/post/69a15a2845b0b600727113ea
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+Content-Type: application/json
+
+{
+  "text": "UPDATED: Authentic Manchester United 2023-24 jersey - Limited Edition! Price reduced for quick sale.",
+  "image": "/uploads/post-photos/manchester-united-updated.jpg",
+  "jerseyDetails": {
+    "team": "Manchester United",
+    "league": "Premier League",
+    "price": 74.99,
+    "size": "M",
+    "imageUrl": "/uploads/jerseys/manchester-united-new-photo.jpg"
+  }
+}
+
+###
+
+### Delete a post
+# Removes a post and all associated comments from the database
+# Only the post owner can delete their post
+# Replaces :postId with actual post MongoDB ObjectId
+DELETE http://localhost:5000/api/post/69a15a2845b0b600727113ea
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+
+###
+### COMMENT ENDPOINTS
+###
+
+### Get all comments for a specific post
+# Fetches all comments on a particular jersey post
+# Returns array of comments with author sub-schema (username, profilePicture, _id)
+# Ordered by creation date (newest first)
+# Replace :postId with actual post MongoDB ObjectId
+GET http://localhost:5000/api/comments/post/:postId
+Authorization: Bearer YOUR_JWT_TOKEN_HERE
+
+###
+
+### Create a comment on a post
+# Adds a new comment to a specific jersey post
+# Author sub-schema (username, profilePicture, _id) is automatically embedded from JWT token
+# You ONLY need to provide: postId and content
+# Automatically increments the post's commentsCount field
+# Replace :postId with the actual post MongoDB ObjectId
+POST http://localhost:5000/api/comments
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+Content-Type: application/json
+
+{
+  "postId": "69a15b5645b0b600727113ef",
+  "content": "This is an amazing vintage Manchester United jersey! What year is it from? Still available?"
+}
+
+###
+
+### Delete a comment
+# Removes a comment from a post by comment ID
+# Only the comment author can delete their own comment
+# Automatically decrements the associated post's commentsCount field
+# Replace :commentId with actual comment MongoDB ObjectId
+DELETE http://localhost:5000/api/comments/69a15e0f45b0b6007271140b
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+
+###
+### USER PROFILE ENDPOINTS
+###
+
+### Update user profile
+# Updates user's profile information (username and/or profilePicture)
+# CRITICAL: This endpoint triggers middleware hook that automatically syncs changes across ALL user's posts and comments
+# When username or profilePicture is updated here, it propagates to:
+#   - All posts created by this user (user.username, user.profilePicture)
+#   - All comments created by this user (author.username, author.profilePicture)
+# This ensures data consistency across the entire database
+# Replace :userId with actual user MongoDB ObjectId
+PUT http://localhost:5000/api/auth/user/69a14f59944c58a061924cb5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+Content-Type: application/json
+
+{
+  "username": "jerseyCollector",
+  "profilePicture": "/uploads/avatars/profile-pic-new.jpg"
+}
+
+###
+### ============================================
+### COMPLETE TESTING WORKFLOW
+### ============================================
+
+# WORKFLOW STEP 1: Create User Account
+# Action: Send "Register a new user account" request
+# Expected: Get response with token and user data including _id
+# Save: Copy the token and userId for later use
+
+# WORKFLOW STEP 2: Login and Get Token
+# Action: Send "Login with existing user credentials" request
+# Expected: Get JWT token in response
+# Save: Copy token and replace YOUR_JWT_TOKEN_HERE in all requests below
+
+# WORKFLOW STEP 3: Verify Authentication
+# Action: Send "Get all posts" request with token in Authorization header
+# Expected: Get array of all posts (may be empty if first test)
+# Result: Confirms authentication is working
+
+# WORKFLOW STEP 4: Create a Jersey Post
+# Action: Send "Create a new jersey post" request
+# Expected: New post created with _id, timestamps, likes array (empty), commentsCount (0)
+# Save: Copy the postId from response for comment tests
+
+# WORKFLOW STEP 5: Retrieve Your Created Post
+# Action: Replace :postId in "Get single post by ID" with your postId
+# Action: Send "Get single post by ID" request
+# Expected: Get back the exact post you created with all fields
+# Result: Confirms post was saved correctly to database
+
+# WORKFLOW STEP 6: Create a Comment
+# Action: Replace :postId in "Create a comment on a post" with your actual postId
+# Action: Send "Create a comment on a post" request
+# Expected: Comment created with _id, author sub-schema, content, createdAt
+# Verify: Post's commentsCount should increment from 0 to 1
+# Save: Copy commentId for deletion test
+
+# WORKFLOW STEP 7: Get All Comments on Post
+# Action: Replace :postId in "Get all comments for a specific post" with your postId
+# Action: Send "Get all comments for a specific post" request
+# Expected: Array containing the comment you just created
+# Verify: Author info matches your username from JWT token
+
+# WORKFLOW STEP 8: Test Middleware Sync - Update User Profile
+# Action: Replace :userId with your actual user _id
+# Action: Change "username" to something different (e.g., "jerseyCollector")
+# Action: Send "Update user profile" request
+# Expected: User updated successfully
+
+# WORKFLOW STEP 9: Verify Middleware Sync in Database
+# Action: Open MongoDB Compass
+# Action: Connect to: mongodb://127.0.0.1:27017/soccer_store
+# Action: Navigate to posts collection
+# Action: Find your post by ID - verify username matches your new username
+# Action: Navigate to comments collection
+# Action: Find your comment - verify author.username matches new username
+# Result: Confirms middleware automatically synced profile changes everywhere
+
+# WORKFLOW STEP 10: Update the Post
+# Action: Replace :postId in "Update an existing post" with your postId
+# Action: Modify text, price, size, or other fields
+# Action: Send "Update an existing post" request
+# Expected: Post updated with new values and new updatedAt timestamp
+
+# WORKFLOW STEP 11: Delete Comment
+# Action: Replace :commentId with the commentId from Step 6
+# Action: Send "Delete a comment" request
+# Expected: Comment deleted, post's commentsCount decremented from 1 to 0
+
+# WORKFLOW STEP 12: Verify Comment Deletion
+# Action: Send "Get all comments for a specific post" request again
+# Expected: Should return empty array or comment list without your deleted comment
+
+# WORKFLOW STEP 13: Delete Post
+# Action: Replace :postId in "Delete a post" with your postId
+# Action: Send "Delete a post" request
+# Expected: Post deleted successfully
+
+# WORKFLOW STEP 14: Verify Post Deletion
+# Action: Send "Get all posts" request
+# Expected: Your post should no longer appear in the list
+
+###
+### FIELD REFERENCE & SCHEMA DOCUMENTATION
+###
+
+# User Schema (matches TypeScript IUser):
+# {
+#   _id: ObjectId,                    // Auto-generated MongoDB ID
+#   username: String,                 // Required, Unique, 3+ chars
+#   email: String,                    // Required, Unique, validated
+#   password: String,                 // Required, hashed with bcryptjs
+#   profilePicture: String | null,    // Optional, local file path
+#   refreshTokens: String[],          // Array of JWT tokens
+#   likedPosts: ObjectId[],           // Array of Post IDs user liked
+#   wishlist: Jersey[],               // Array of jersey objects
+#   createdAt: Timestamp,             // Auto-generated
+#   updatedAt: Timestamp              // Auto-updated
+# }
+
+# UserSub Schema (embedded in Posts and Comments):
+# {
+#   _id: ObjectId,                    // User ID
+#   username: String,                 // Username
+#   profilePicture: String | null     // Profile picture path
+# }
+
+# Jersey Schema (embedded in Post):
+# {
+#   _id: ObjectId,
+#   team: String,                     // Required (e.g., "Manchester United")
+#   league: String,                   // Required (e.g., "Premier League")
+#   price: Number,                    // Required, decimal value
+#   size: String,                     // Required, enum: XS/S/M/L/XL/XXL
+#   imageUrl: String                  // Required, local file path
+# }
+
+# Post Schema (matches TypeScript IPost):
+# {
+#   _id: ObjectId,
+#   user: UserSub,                    // Embedded user sub-schema
+#   text: String,                     // Required, post description
+#   image: String | null,             // Optional, local file path
+#   jerseyDetails: Jersey,            // Embedded jersey schema
+#   likes: ObjectId[],                // Array of user IDs who liked
+#   commentsCount: Number,            // Auto-updated by comment endpoints
+#   createdAt: Timestamp,             // Auto-generated
+#   updatedAt: Timestamp              // Auto-updated on changes
+# }
+
+# Comment Schema (matches TypeScript IComment):
+# {
+#   _id: ObjectId,
+#   postId: ObjectId,                 // Reference to Post
+#   author: UserSub,                  // Embedded author sub-schema
+#   content: String,                  // Required, comment text
+#   createdAt: Timestamp              // Auto-generated
+# }
+
+###
+### TESTING NOTES
+###
+
+# JWT Token:
+# - Valid for 1 hour after login
+# - Include in Authorization header as: Bearer <token>
+# - Required for all requests except /auth/register and /auth/login
+
+# Middleware Sync:
+# - When user profile (username/profilePicture) is updated
+# - Automatically updates ALL posts created by that user
+# - Automatically updates ALL comments created by that user
+# - Ensures data consistency across database
+
+# Database Location:
+# - MongoDB: localhost:27017
+# - Database: soccer_store
+# - Collections: users, posts, comments
+
+# Timestamps:
+# - Posts include createdAt and updatedAt for pagination
+# - Comments ordered by createdAt (newest first)
+# - Use timestamps for efficient queries and sorting
+
+###
