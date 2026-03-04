@@ -1,6 +1,8 @@
 import 'dotenv/config';
 import express, { Express } from 'express';
 import cors from 'cors';
+import path from 'path';
+import fs from 'fs';
 import { connect as connectDB } from './config/db';
 import postRoutes from './routes/postRoutes';
 import authRoutes from './routes/authRoutes';
@@ -8,9 +10,19 @@ import commentRoutes from './routes/commentRoutes';
 
 const app: Express = express();
 
+// Ensure uploads directory exists
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+  console.log('Created uploads directory:', uploadsDir);
+}
+
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Serve uploaded files as static assets
+app.use('/uploads', express.static(uploadsDir));
 
 // Routes
 app.use('/api/auth', authRoutes);
