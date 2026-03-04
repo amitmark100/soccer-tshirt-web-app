@@ -25,8 +25,8 @@ POST http://localhost:5000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "soccerfan2",
-  "email": "soccerfan2@example.com",
+  "username": "soccerfan7",
+  "email": "soccerfan7@example.com",
   "password": "SecurePass123"
 }
 
@@ -53,15 +53,15 @@ Content-Type: application/json
 # Returns array with user info (sub-schema), jerseyDetails, likes array, commentsCount
 # Includes timestamps (createdAt, updatedAt) for paging support
 GET http://localhost:5000/api/post
-Authorization: Bearer YOUR_JWT_TOKEN_HERE
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 
 ###
 
 ### Get single post by ID
 # Retrieves a specific post with all details including user, jersey, and engagement metrics
 # Replace :postId with actual MongoDB ObjectId from created post response
-GET http://localhost:5000/api/post/69a15a2845b0b600727113ea
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+GET http://localhost:5000/api/post/69a6e523cd08f2fa3c448925
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 
 ###
 
@@ -69,21 +69,47 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiN
 # Creates a post with text description, optional image, and full jerseyDetails object
 # jerseyDetails MUST include: team, league, price (Number), size (XS/S/M/L/XL/XXL), imageUrl
 # User sub-schema is automatically embedded from JWT token - you only provide text and jerseyDetails!
-POST http://localhost:5000/api/post
-Authorization: Bearer YOUR_JWT_TOKEN_HERE
-Content-Type: application/json
+    POST http://localhost:5000/api/post
+    Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
+    Content-Type: application/json
 
-{
-  "text": "Selling authentic Manchester United 2023-24 season jersey. Excellent condition, never worn. Original tags still attached.",
-  "image": "/uploads/post-photos/manchester-united-2024.jpg",
-  "jerseyDetails": {
-    "team": "Manchester United",
-    "league": "Premier League",
-    "price": 89.99,
-    "size": "L",
-    "imageUrl": "/uploads/jerseys/manchester-united-2024.jpg"
-  }
-}
+    {
+      "text": "Selling authentic Hapoel-Tel-Aviv 2023-24 season jersey. Excellent condition, never worn. Original tags still attached.",
+      "image": "/uploads/post-photos/manchester-united-2024.jpg",
+      "jerseyDetails": {
+        "team": "HTA",
+        "league": "ISR League",
+        "price": 100.99,
+        "size": "XL",
+        "imageUrl": "/uploads/jerseys/Hapoel-Tel-Aviv-2023-24.jpg"
+      }
+    }
+
+###
+
+### Create a new post with image (multipart/form-data)
+# Creates a post with an uploaded image file attached
+# Image file is automatically saved to back/uploads/ with unique name
+# Returns the image path as /uploads/{unique-filename}
+# IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with actual token from login!
+POST http://localhost:5000/api/post
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+Here is my vintage HTA FC jersey from the 2007. Official made, still in excellent condition with minimal wear. Unmatched collectible piece!
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="Hapoel-jersey-2000s.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="jerseyDetails"
+
+{"team":"HTA FC","league":"ISR League","price":125.50,"size":"M","imageUrl":"/uploads/jerseys/HTA-2000s.jpg"}
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ###
 
@@ -92,72 +118,46 @@ Content-Type: application/json
 # Only the original post creator can update their post
 # REPLACE :postId with actual post MongoDB ObjectId (remove the colon!)
 # Example: PUT http://localhost:5000/api/post/69a15a2845b0b600727113ea
-PUT http://localhost:5000/api/post/69a15a2845b0b600727113ea
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
-Content-Type: application/json
+PUT http://localhost:5000/api/post/69a726fc855e9e1c12e57120
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="text"
+
+This is the updated text with everything fixed!
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="jerseyDetails"
 
 {
-  "text": "UPDATED: Authentic Manchester United 2023-24 jersey - Limited Edition! Price reduced for quick sale.",
-  "image": "/uploads/post-photos/manchester-united-updated.jpg",
-  "jerseyDetails": {
-    "team": "Manchester United",
-    "league": "Premier League",
-    "price": 74.99,
-    "size": "M",
-    "imageUrl": "/uploads/jerseys/manchester-united-new-photo.jpg"
-  }
+  "team": "Real Madrid",
+  "league": "La Liga",
+  "price": 120,
+  "size": "L",
+  "imageUrl": "/uploads/jerseys/real-madrid-home.jpg"
 }
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="new_jersey_photo.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ###
-
-### Delete a post
-# Removes a post and all associated comments from the database
-# Only the post owner can delete their post
-# Replaces :postId with actual post MongoDB ObjectId
-DELETE http://localhost:5000/api/post/69a15a2845b0b600727113ea
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
-
-###
-### COMMENT ENDPOINTS
+### LIKES ENDPOINTS (Jersey Post Engagement)
 ###
 
-### Get all comments for a specific post
-# Fetches all comments on a particular jersey post
-# Returns array of comments with author sub-schema (username, profilePicture, _id)
-# Ordered by creation date (newest first)
-# Replace :postId with actual post MongoDB ObjectId
-GET http://localhost:5000/api/comments/post/:postId
-Authorization: Bearer YOUR_JWT_TOKEN_HERE
+### Toggle like on a post
+# Atomic operation: First click likes the post, second click unlikes it
+# Uses MongoDB aggregation pipeline to handle toggle in a single database operation
+# If user already liked the post: removes their like (unlike)
+# If user hasn't liked the post: adds their like (like)
+# Thread-safe, efficient, and minimizes server-side memory usage
+# Replace :postId with actual post MongoDB ObjectId (remove the colon!)
+# Example: PATCH http://localhost:5000/api/post/69a15a2845b0b600727113ea/like
+PATCH http://localhost:5000/api/post/69a726fc855e9e1c12e57120/like
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjYyNTc0OCwiZXhwIjoxNzcyNjI5MzQ4fQ.hHqtJJ2UPdSNoTa-OlGUrd_0kFXLAiMTK-xZtzbNAi8
 
-###
-
-### Create a comment on a post
-# Adds a new comment to a specific jersey post
-# Author sub-schema (username, profilePicture, _id) is automatically embedded from JWT token
-# You ONLY need to provide: postId and content
-# Automatically increments the post's commentsCount field
-# Replace :postId with the actual post MongoDB ObjectId
-POST http://localhost:5000/api/comments
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
-Content-Type: application/json
-
-{
-  "postId": "69a15b5645b0b600727113ef",
-  "content": "This is an amazing vintage Manchester United jersey! What year is it from? Still available?"
-}
-
-###
-
-### Delete a comment
-# Removes a comment from a post by comment ID
-# Only the comment author can delete their own comment
-# Automatically decrements the associated post's commentsCount field
-# Replace :commentId with actual comment MongoDB ObjectId
-DELETE http://localhost:5000/api/comments/69a15e0f45b0b6007271140b
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
-
-###
-### USER PROFILE ENDPOINTS
 ###
 
 ### Update user profile
@@ -169,13 +169,37 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiN
 # This ensures data consistency across the entire database
 # Replace :userId with actual user MongoDB ObjectId
 PUT http://localhost:5000/api/auth/user/69a14f59944c58a061924cb5
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjE4MTU1NCwiZXhwIjoxNzcyMTg1MTU0fQ.twAL-qqJPYmoT9dYBsaUSm3ACeUK9iDPFPks6uMNfPo
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 Content-Type: application/json
 
 {
-  "username": "jerseyCollector",
+  "username": "NewJerseyCollector",
   "profilePicture": "/uploads/avatars/profile-pic-new.jpg"
 }
+
+###
+
+### Update user profile with avatar (multipart/form-data)
+# Updates user's profile with uploaded avatar image
+# Avatar file is automatically saved to back/uploads/ with unique name
+# Returns the avatar path as /uploads/{unique-filename}
+# Can also include username in the form data for simultaneous update
+# IMPORTANT: Replace YOUR_USER_ID_HERE with your actual user MongoDB ObjectId
+# IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with actual token from login!
+PUT http://localhost:5000/api/auth/user/69a14f59944c58a061924cb5
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MDc0OCwiZXhwIjoxNzcyNTY0MzQ4fQ.rnR0QbNvvAjDcd0-sX-OsPBel6K4kLMjD680Oi-GEMs
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="username"
+
+jerseyMaster2024
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="avatar"; filename="profile-avatar.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ###
 ### ============================================
