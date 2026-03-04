@@ -45,6 +45,15 @@ Content-Type: application/json
 }
 
 ###
+
+### Logout user
+# Logs out the authenticated user
+# IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with a valid JWT token from login response
+# This endpoint requires authentication via Bearer token in the Authorization header
+POST http://localhost:5000/api/auth/logout
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjYzMzUyNCwiZXhwIjoxNzcyNjM3MTI0fQ.C7XrtWXXdhKuydQtczaLAifaHkE4voLk7B34hHe25VA
+
+###
 ### POST ENDPOINTS (Jersey Listings)
 ###
 

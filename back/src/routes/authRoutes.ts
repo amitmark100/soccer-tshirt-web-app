@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware';
 import { uploadAvatar } from '../middleware/uploadMiddleware';
-import { register, login, updateUserProfile } from '../controllers/authController';
+import { register, login, updateUserProfile, logout } from '../controllers/authController';
 
 const router = Router();
 
@@ -26,5 +26,12 @@ router.post('/login', login);
  * @access  Private (requires authentication)
  */
 router.put('/user/:userId', authMiddleware, uploadAvatar, updateUserProfile);
+
+/**
+ * @route   POST /api/auth/logout
+ * @desc    Logout user
+ * @access  Private (requires authentication)
+ */
+router.post('/logout', authMiddleware, logout);
 
 export default router;

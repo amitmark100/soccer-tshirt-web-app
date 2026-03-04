@@ -182,3 +182,17 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     res.status(500).json({ error: errorMessage });
   }
 };
+
+/**
+ * @desc    Logout user
+ * @access  Private (requires authentication)
+ */
+export const logout = async (_req: Request, res: Response): Promise<void> => {
+  try {
+    res.json({ msg: 'User logged out successfully' });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Server error';
+    console.error(errorMessage);
+    res.status(500).json({ error: errorMessage });
+  }
+};
