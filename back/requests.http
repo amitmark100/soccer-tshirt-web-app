@@ -1,7 +1,7 @@
 ### ============================================
 ### SOCCER JERSEY STORE API - FULL TEST SUITE
 ### ============================================
-### Base URL: http://localhost:5000
+### Base URL: https://localhost:5000
 ### Format: REST Client (VS Code Extension)
 ### ============================================
 ###
@@ -21,12 +21,12 @@
 # Creates a new user with username, email, and password
 # Response includes JWT token and user data (_id, username, email)
 # This token is required for all protected endpoints below
-POST http://localhost:5000/api/auth/register
+POST https://localhost:5000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "soccerfan7",
-  "email": "soccerfan7@example.com",
+  "username": "soccerfan177",
+  "email": "soccerfan177@example.com",
   "password": "SecurePass123"
 }
 
@@ -36,7 +36,7 @@ Content-Type: application/json
 # Authenticates user and returns JWT token for protected requests
 # Copy the token from response and replace YOUR_JWT_TOKEN_HERE in requests below
 # Token expires in 1 hour
-POST http://localhost:5000/api/auth/login
+POST https://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
@@ -50,8 +50,26 @@ Content-Type: application/json
 # Logs out the authenticated user
 # IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with a valid JWT token from login response
 # This endpoint requires authentication via Bearer token in the Authorization header
-POST http://localhost:5000/api/auth/logout
+POST https://localhost:5000/api/auth/logout
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjYzMzUyNCwiZXhwIjoxNzcyNjM3MTI0fQ.C7XrtWXXdhKuydQtczaLAifaHkE4voLk7B34hHe25VA
+
+###
+
+### Google Login / Signup
+# Authenticates or registers user with Google OAuth
+# IMPORTANT: Replace GOOGLE_ID_TOKEN_HERE with an actual Google ID token from:
+#   - Google OAuth Playground: https://developers.google.com/oauthplayground
+#   - Or use frontend's google-auth-library to get a valid credential
+# The endpoint uses upsert logic:
+#   - If email exists: Updates user with googleId and profile picture
+#   - If email new: Creates user with Google name, email, and profile picture
+# Returns JWT token for this app (not Google's token)
+POST https://localhost:5000/api/auth/google
+Content-Type: application/json
+
+{
+  "credential": "eyJhbGciOiJSUzI1NiIsImtpZCI6IjI1MDdmNTFhZjJhMTYyNDY3MDc0ODQ2NzRhNDJhZTNjMmI2MjMxOWMiLCJ0eXAiOiJKV1QifQ.eyJpc3MiOiJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20iLCJhenAiOiIyMTcwNDE4MTA0ODAtbWFsYTFiaHJpMG8zMmh2OGJpcGoxZDJtcjk1OGtlaWUuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJhdWQiOiIyMTcwNDE4MTA0ODAtbWFsYTFiaHJpMG8zMmh2OGJpcGoxZDJtcjk1OGtlaWUuYXBwcy5nb29nbGV1c2VyY29udGVudC5jb20iLCJzdWIiOiIxMTAyNDYzNzQyNTU3NjUxMTk1MDYiLCJlbWFpbCI6ImVsYWliaXRvbjFAZ21haWwuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImF0X2hhc2giOiJtSkxZa3ZyOEFVb2hQLWJsSEZIWWl3IiwibmFtZSI6Itei15nXnNeQ15kg15HXmdeY15XXnyIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NJd3ZBN2tpV1kyaVVQQnpwUXhUbFZGWkFfVkoxdUUyb1hyaWNLSzZWck80U3Rzcnc9czk2LWMiLCJnaXZlbl9uYW1lIjoi16LXmdec15DXmSIsImZhbWlseV9uYW1lIjoi15HXmdeY15XXnyIsImlhdCI6MTc3MjcyNTY5OSwiZXhwIjoxNzcyNzI5Mjk5fQ.EUfGxmfpM2xJsi9nSA_Jdy4UGYKPnqm2LGGDCRi1FIO-LIvLpwwPpyoPzjma886MqXS8MwZHaQG-r3mXbOE8SGDnfuVwQMdYNJte53FpUsBdcYSUPnp8qyAo4L0uk_jCMCv1A0cQNMFOKOnB0Lsq9ZJTj06h1eM855QJoqEBLaF-mKbag3TTP8O49hrl76rrmrrQdFwlu6__Qzuf22y1UN-jgWlzk_TGXu7C5TdXlsxE0zlaCn3cT4n6cRLNGC5UuBLEIcExxX61w-99EvAf6Wfr8FtXrW2me4caER_HIm27ZxFL64UnIKkW8M-3QeV4Sh8qv1mrUv4Sooifla6c7g"
+}
 
 ###
 ### POST ENDPOINTS (Jersey Listings)
@@ -61,7 +79,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiN
 # Fetches all jersey posts from the database
 # Returns array with user info (sub-schema), jerseyDetails, likes array, commentsCount
 # Includes timestamps (createdAt, updatedAt) for paging support
-GET http://localhost:5000/api/post
+GET https://localhost:5000/api/post
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 
 ###
@@ -69,7 +87,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiN
 ### Get single post by ID
 # Retrieves a specific post with all details including user, jersey, and engagement metrics
 # Replace :postId with actual MongoDB ObjectId from created post response
-GET http://localhost:5000/api/post/69a6e523cd08f2fa3c448925
+GET https://localhost:5000/api/post/69a6e523cd08f2fa3c448925
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 
 ###
@@ -78,7 +96,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiN
 # Creates a post with text description, optional image, and full jerseyDetails object
 # jerseyDetails MUST include: team, league, price (Number), size (XS/S/M/L/XL/XXL), imageUrl
 # User sub-schema is automatically embedded from JWT token - you only provide text and jerseyDetails!
-    POST http://localhost:5000/api/post
+    POST https://localhost:5000/api/post
     Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
     Content-Type: application/json
 
@@ -101,7 +119,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiN
 # Image file is automatically saved to back/uploads/ with unique name
 # Returns the image path as /uploads/{unique-filename}
 # IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with actual token from login!
-POST http://localhost:5000/api/post
+POST https://localhost:5000/api/post
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
@@ -126,8 +144,8 @@ Content-Disposition: form-data; name="jerseyDetails"
 # Modifies post content, image, and/or jersey details by ID
 # Only the original post creator can update their post
 # REPLACE :postId with actual post MongoDB ObjectId (remove the colon!)
-# Example: PUT http://localhost:5000/api/post/69a15a2845b0b600727113ea
-PUT http://localhost:5000/api/post/69a726fc855e9e1c12e57120
+# Example: PUT https://localhost:5000/api/post/69a15a2845b0b600727113ea
+PUT https://localhost:5000/api/post/69a726fc855e9e1c12e57120
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
@@ -163,8 +181,8 @@ Content-Type: image/jpeg
 # If user hasn't liked the post: adds their like (like)
 # Thread-safe, efficient, and minimizes server-side memory usage
 # Replace :postId with actual post MongoDB ObjectId (remove the colon!)
-# Example: PATCH http://localhost:5000/api/post/69a15a2845b0b600727113ea/like
-PATCH http://localhost:5000/api/post/69a726fc855e9e1c12e57120/like
+# Example: PATCH https://localhost:5000/api/post/69a15a2845b0b600727113ea/like
+PATCH https://localhost:5000/api/post/69a726fc855e9e1c12e57120/like
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjYyNTc0OCwiZXhwIjoxNzcyNjI5MzQ4fQ.hHqtJJ2UPdSNoTa-OlGUrd_0kFXLAiMTK-xZtzbNAi8
 
 ###
@@ -177,7 +195,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiN
 #   - All comments created by this user (author.username, author.profilePicture)
 # This ensures data consistency across the entire database
 # Replace :userId with actual user MongoDB ObjectId
-PUT http://localhost:5000/api/auth/user/69a14f59944c58a061924cb5
+PUT https://localhost:5000/api/auth/user/69a14f59944c58a061924cb5
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MTQ3NywiZXhwIjoxNzcyNTY1MDc3fQ.5g7rgyTJODxyhr1OcswrDpmuEX9FzrMtRkfmN2VKaFM
 Content-Type: application/json
 
@@ -195,7 +213,7 @@ Content-Type: application/json
 # Can also include username in the form data for simultaneous update
 # IMPORTANT: Replace YOUR_USER_ID_HERE with your actual user MongoDB ObjectId
 # IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with actual token from login!
-PUT http://localhost:5000/api/auth/user/69a14f59944c58a061924cb5
+PUT https://localhost:5000/api/auth/user/69a14f59944c58a061924cb5
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MjU2MDc0OCwiZXhwIjoxNzcyNTY0MzQ4fQ.rnR0QbNvvAjDcd0-sX-OsPBel6K4kLMjD680Oi-GEMs
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
 
@@ -302,11 +320,11 @@ Content-Type: image/jpeg
 #   _id: ObjectId,                    // Auto-generated MongoDB ID
 #   username: String,                 // Required, Unique, 3+ chars
 #   email: String,                    // Required, Unique, validated
-#   password: String,                 // Required, hashed with bcryptjs
-#   profilePicture: String | null,    // Optional, local file path
-#   refreshTokens: String[],          // Array of JWT tokens
+#   password: String,                 // Optional, hashed with bcryptjs (not required for Google OAuth)
+#   googleId: String,                 // Optional, Google OAuth ID
+#   profilePicture: String | null,    // Optional, local file path or Google picture URL
+#   refreshTokens: String[],          // Array of JWT refresh tokens
 #   likedPosts: ObjectId[],           // Array of Post IDs user liked
-#   wishlist: Jersey[],               // Array of jersey objects
 #   createdAt: Timestamp,             // Auto-generated
 #   updatedAt: Timestamp              // Auto-updated
 # }

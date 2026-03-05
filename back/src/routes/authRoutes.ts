@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware';
 import { uploadAvatar } from '../middleware/uploadMiddleware';
-import { register, login, updateUserProfile, logout } from '../controllers/authController';
+import { register, login, updateUserProfile, logout, googleLogin } from '../controllers/authController';
 
 const router = Router();
 
@@ -33,5 +33,12 @@ router.put('/user/:userId', authMiddleware, uploadAvatar, updateUserProfile);
  * @access  Private (requires authentication)
  */
 router.post('/logout', authMiddleware, logout);
+
+/**
+ * @route   POST /api/auth/google
+ * @desc    Google Login / Signup (Upsert user on email or googleId)
+ * @access  Public
+ */
+router.post('/google', googleLogin);
 
 export default router;

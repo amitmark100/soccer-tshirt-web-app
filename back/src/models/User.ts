@@ -1,10 +1,9 @@
 import mongoose, { Schema, Model, InferSchemaType } from 'mongoose';
 import bcrypt from 'bcryptjs';
-import { jerseySchema } from './general';
 
 /**
  * User Schema: Main user document in the database
- * Includes authentication, profile, and wishlist information
+ * Includes authentication, profile, and engagement information
  */
 const userSchema = new Schema(
   {
@@ -25,13 +24,18 @@ const userSchema = new Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
       minlength: 6,
       select: false, // Don't return password by default
     },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allows null for non-Google users
+    },
     profilePicture: {
       type: String,
-      default: null, // Local path to profile image
+      default: null, // Local path to profile image or Google profile picture URL
     },
     refreshTokens: {
       type: [String],
@@ -43,17 +47,16 @@ const userSchema = new Schema(
         ref: 'Post',
       },
     ],
-    wishlist: [jerseySchema],
   },
   { timestamps: true }
 );
 
 /**
  * Pre-save middleware: Hash password before saving
- * Only hash if password is modified (new user or password change)
+ * Only hash if password is provided and modified (new user with password or password change)
  */
 userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) {
+  if (!this.isModified('password') || !this.password) {
     return next();
   }
 
@@ -112,8 +115,13 @@ userSchema.post('findOneAndUpdate', async function (doc) {
 
 /**
  * Instance method: Compare password with hashed password in database
+ * Returns false if password is not set (e.g., for Google OAuth users)
  */
 userSchema.methods.comparePassword = async function (candidatePassword: string): Promise<boolean> {
+  // If no password is set (Google login user), always return false
+  if (!this.password) {
+    return false;
+  }
   return bcrypt.compare(candidatePassword, this.password);
 };
 

@@ -27,7 +27,7 @@ export type UserSub = InferSchemaType<typeof userSubSchema>;
 
 /**
  * Jersey Schema: Represents soccer jersey details
- * Used as embedded schema in Post and User Wishlist
+ * Used as embedded schema in Post
  */
 const jerseySchema = new Schema(
   {

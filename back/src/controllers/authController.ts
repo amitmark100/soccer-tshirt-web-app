@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
 import User from '../models/User';
 
 interface JWTPayload {
@@ -44,19 +45,29 @@ export const register = async (req: Request, res: Response): Promise<void> => {
 
     await user.save();
 
-    // Generate JWT token
-    const payload: JWTPayload = {
+    // Generate JWT Access Token
+    const accessPayload: JWTPayload = {
       user: {
         id: user._id.toString(),
       },
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
+    const accessToken = jwt.sign(accessPayload, process.env.JWT_SECRET as string, {
       expiresIn: '1h',
     });
 
+    // Generate JWT Refresh Token (longer expiry)
+    const refreshToken = jwt.sign(accessPayload, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET as string, {
+      expiresIn: '7d',
+    });
+
+    // Push refresh token to user's refreshTokens array and save
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
     res.status(201).json({
-      token,
+      token: accessToken,
+      refreshToken: refreshToken,
       user: {
         id: user._id,
         username: user.username,
@@ -91,6 +102,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
+    // Check if user is a Google OAuth user (no password set)
+    if (!user.password && user.googleId) {
+      res.status(400).json({ msg: 'This account uses Google Sign-In. Please use the Google login option.' });
+      return;
+    }
+
     // Compare password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
@@ -98,19 +115,29 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    // Generate JWT token
-    const payload: JWTPayload = {
+    // Generate JWT Access Token
+    const accessPayload: JWTPayload = {
       user: {
         id: user._id.toString(),
       },
     };
 
-    const token = jwt.sign(payload, process.env.JWT_SECRET as string, {
+    const accessToken = jwt.sign(accessPayload, process.env.JWT_SECRET as string, {
       expiresIn: '1h',
     });
 
+    // Generate JWT Refresh Token (longer expiry)
+    const refreshToken = jwt.sign(accessPayload, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET as string, {
+      expiresIn: '7d',
+    });
+
+    // Push refresh token to user's refreshTokens array and save
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
     res.json({
-      token,
+      token: accessToken,
+      refreshToken: refreshToken,
       user: {
         id: user._id,
         username: user.username,
@@ -194,5 +221,188 @@ export const logout = async (_req: Request, res: Response): Promise<void> => {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
     console.error(errorMessage);
     res.status(500).json({ error: errorMessage });
+  }
+};
+
+/**
+ * @desc    Google Login / Signup
+ * @access  Public
+ * @details Verifies Google ID token and creates or updates user
+ */
+export const googleLogin = async (req: Request, res: Response): Promise<void> => {
+  console.log('[Google Login] Request received');
+  const { credential } = req.body;
+
+  // Validate credential
+  if (!credential) {
+    console.error('[Google Login] Missing credential in request');
+    res.status(400).json({ msg: 'Google credential (ID token) is required' });
+    return;
+  }
+
+  try {
+    console.log('[Google Login] Step 1: Verifying ID token with Google');
+    
+    // Validate environment variables
+    if (!process.env.GOOGLE_CLIENT_ID) {
+      throw new Error('GOOGLE_CLIENT_ID environment variable is not set');
+    }
+    if (!process.env.JWT_SECRET) {
+      throw new Error('JWT_SECRET environment variable is not set');
+    }
+
+    // Initialize Google OAuth2 client
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+    // Verify the ID token
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken: credential,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch (tokenError) {
+      const tokenErrorMsg = tokenError instanceof Error ? tokenError.message : 'Token verification failed';
+      console.error('[Google Login] Token verification failed:', tokenErrorMsg);
+      res.status(401).json({ msg: `Token verification failed: ${tokenErrorMsg}` });
+      return;
+    }
+
+    console.log('[Google Login] Step 2: Token verified successfully');
+
+    const payload = ticket.getPayload();
+    if (!payload) {
+      console.error('[Google Login] Payload is empty or undefined');
+      res.status(400).json({ msg: 'Invalid Google token: No payload' });
+      return;
+    }
+
+    const { sub: googleId, email, name, picture } = payload;
+
+    // Validate required fields
+    if (!googleId || !email) {
+      console.error('[Google Login] Missing required fields - googleId:', googleId, 'email:', email);
+      res.status(400).json({ msg: 'Invalid Google token: Missing googleId or email' });
+      return;
+    }
+
+    console.log('[Google Login] Step 3: Token payload extracted - email:', email, 'googleId:', googleId);
+
+    // Upsert: Find user by email or googleId
+    console.log('[Google Login] Step 4: Checking if user exists by email or googleId');
+    let user = await User.findOne({
+      $or: [{ email }, { googleId }],
+    });
+
+    if (user) {
+      console.log('[Google Login] Step 5a: User found - updating googleId and profile picture');
+      // User exists: Update googleId and profile picture if provided
+      const updateData: Record<string, string> = { googleId };
+      if (picture) {
+        updateData.profilePicture = picture;
+        console.log('[Google Login] Updating profilePicture from Google:', picture);
+      }
+      
+      try {
+        user = await User.findByIdAndUpdate(user._id, updateData, {
+          new: true,
+          runValidators: false, // Avoid validation issues during update
+        });
+        console.log('[Google Login] User updated successfully');
+      } catch (updateError) {
+        const updateErrorMsg = updateError instanceof Error ? updateError.message : 'Unknown error';
+        console.error('[Google Login] Failed to update existing user:', updateErrorMsg);
+        throw updateError;
+      }
+    } else {
+      console.log('[Google Login] Step 5b: User not found - creating new user');
+      // New user: Create account with Google information
+      let newUsername = name || email.split('@')[0] || `user_${Date.now()}`;
+      console.log('[Google Login] Desired username:', newUsername);
+
+      // Check if username already exists and generate unique one if needed
+      const existingUser = await User.findOne({ username: newUsername });
+      if (existingUser) {
+        console.log('[Google Login] Username already exists, appending timestamp');
+        newUsername = `${newUsername}_${Date.now()}`;
+        console.log('[Google Login] New unique username:', newUsername);
+      }
+
+      console.log('[Google Login] Creating user with username:', newUsername, 'email:', email);
+
+      try {
+        user = new User({
+          username: newUsername,
+          email,
+          googleId,
+          profilePicture: picture || null,
+          // Password is not required for Google login users
+        });
+
+        console.log('[Google Login] New user object created, saving to database');
+        await user.save();
+        console.log('[Google Login] New user saved successfully');
+      } catch (createError) {
+        const createErrorMsg = createError instanceof Error ? createError.message : 'Unknown error';
+        console.error('[Google Login] Failed to create new user:', createErrorMsg);
+        console.error('[Google Login] Error details:', createError);
+        throw createError;
+      }
+    }
+
+    console.log('[Google Login] Step 6: Generating JWT tokens');
+
+    // Generate JWT Access Token
+    const accessPayload: JWTPayload = {
+      user: {
+        id: user._id.toString(),
+      },
+    };
+
+    const accessToken = jwt.sign(accessPayload, process.env.JWT_SECRET as string, {
+      expiresIn: '1h',
+    });
+
+    // Generate JWT Refresh Token (longer expiry)
+    const refreshToken = jwt.sign(accessPayload, process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET as string, {
+      expiresIn: '7d',
+    });
+
+    console.log('[Google Login] Step 6b: Pushing refresh token to user refreshTokens array');
+
+    // Push refresh token to user's refreshTokens array and save
+    user.refreshTokens.push(refreshToken);
+    await user.save();
+
+    console.log('[Google Login] JWT tokens generated successfully');
+    console.log('[Google Login] Step 7: Sending response');
+
+    res.json({
+      token: accessToken,
+      refreshToken: refreshToken,
+      user: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+      },
+    });
+
+    console.log('[Google Login] Response sent successfully');
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown server error';
+    const errorStack = error instanceof Error ? error.stack : '';
+    
+    console.error('[Google Login] FATAL ERROR:', errorMessage);
+    console.error('[Google Login] Error stack:', errorStack);
+    console.error('[Google Login] Full error object:', error);
+
+    // Only send response if not already sent
+    if (!res.headersSent) {
+      res.status(500).json({ 
+        msg: `Google login failed: ${errorMessage}`,
+        error: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+      });
+    }
   }
 };
