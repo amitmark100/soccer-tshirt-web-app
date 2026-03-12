@@ -135,7 +135,18 @@ Content-Type: image/jpeg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW
 Content-Disposition: form-data; name="jerseyDetails"
 
-{"team":"HTA FC","league":"ISR League","price":125.50,"size":"M","imageUrl":"/uploads/jerseys/HTA-2000s.jpg"}
+{
+  "team": "HTA FC",
+  "league": "ISR League",
+  "price": 125.50,
+  "size": "M",
+  "imageUrl": "/uploads/jerseys/HTA-2000s.jpg"
+}
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="image"; filename="new_jersey_photo.jpg"
+Content-Type: image/jpeg
+
+< ./test.jpg
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
 ###
@@ -394,3 +405,13 @@ Content-Type: image/jpeg
 # - Use timestamps for efficient queries and sorting
 
 ###
+### AI Search for posts
+# Uses natural language query to filter posts with AI-generated MongoDB filter
+# IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with a valid JWT token from login response
+POST https://localhost:5000/api/post/ai-search
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MzMzMzYyOCwiZXhwIjoxNzczMzM3MjI4fQ.AcvwrLfph8kJJbo66kkGMwlR0zSZCpV373Y88DWhrVs
+
+{
+  "query": "Premier League jersey for medium size under 250 NIS"
+}
