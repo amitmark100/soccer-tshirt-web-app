@@ -211,11 +211,92 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
 };
 
 /**
+ * @desc    Refresh access token using refresh token
+ * @access  Public
+ * @details Verifies refresh token, checks if it exists in user's refreshTokens[] array,
+ *          and returns a new access token if valid
+ */
+export const refreshToken = async (req: Request, res: Response): Promise<void> => {
+  const { refreshToken: providedRefreshToken } = req.body;
+
+  // Basic validation
+  if (!providedRefreshToken) {
+    res.status(400).json({ msg: 'Refresh token is required' });
+    return;
+  }
+
+  try {
+    // Verify the refresh token signature
+    let decoded: JWTPayload;
+    try {
+      decoded = jwt.verify(
+        providedRefreshToken,
+        process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET as string)
+      ) as JWTPayload;
+    } catch (tokenError) {
+      res.status(401).json({ msg: 'Invalid or expired refresh token' });
+      return;
+    }
+
+    // Find the user by ID from token payload
+    const user = await User.findById(decoded.user.id);
+    if (!user) {
+      res.status(404).json({ msg: 'User not found' });
+      return;
+    }
+
+    // Check if the refresh token exists in user's refreshTokens array
+    if (!user.refreshTokens.includes(providedRefreshToken)) {
+      res.status(401).json({ msg: 'Refresh token not found in user record. Please login again.' });
+      return;
+    }
+
+    // Generate new access token
+    const accessPayload: JWTPayload = {
+      user: {
+        id: user._id.toString(),
+      },
+    };
+
+    const newAccessToken = jwt.sign(accessPayload, process.env.JWT_SECRET as string, {
+      expiresIn: '1h',
+    });
+
+    res.json({
+      token: newAccessToken,
+      refreshToken: providedRefreshToken,
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Server error';
+    console.error(errorMessage);
+    res.status(500).json({ msg: errorMessage });
+  }
+};
+
+/**
  * @desc    Logout user
  * @access  Private (requires authentication)
+ * @details Removes the current refresh token from user's refreshTokens[] array
  */
-export const logout = async (_req: Request, res: Response): Promise<void> => {
+export const logout = async (req: Request, res: Response): Promise<void> => {
+  const { refreshToken: providedRefreshToken } = req.body;
+
   try {
+    const userId = req.user!._id;
+
+    // If refresh token is provided, remove it from the user's refreshTokens array
+    if (providedRefreshToken) {
+      const user = await User.findById(userId);
+      if (!user) {
+        res.status(404).json({ error: 'User not found' });
+        return;
+      }
+
+      // Remove the refresh token from the array
+      user.refreshTokens = user.refreshTokens.filter(token => token !== providedRefreshToken);
+      await user.save();
+    }
+
     res.json({ msg: 'User logged out successfully' });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';

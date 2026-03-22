@@ -88,19 +88,44 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
 };
 
 /**
- * @desc    Get all posts with optional filtering
+ * @desc    Get all posts with optional filtering and pagination
  * @access  Public
+ * @query   userId (optional) - Filter by user ID
+ * @query   page (default 1) - Page number for pagination
+ * @query   limit (default 10) - Number of posts per page
+ * @returns Object with posts array and metadata (totalPosts, currentPage, totalPages)
  */
 export const getPosts = async (req: Request, res: Response): Promise<void> => {
   try {
     const { userId } = req.query;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1); // Default to page 1
+    const limit = Math.max(1, parseInt(req.query.limit as string) || 10); // Default to 10 posts per page
+
     const filter = userId ? { 'user._id': userId } : {};
 
+    // Get total count for pagination metadata
+    const totalPosts = await Post.countDocuments(filter);
+
+    // Calculate pagination values
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(totalPosts / limit);
+
+    // Fetch paginated posts
     const posts = await Post.find(filter)
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .lean();
 
-    res.json(posts);
+    res.json({
+      posts,
+      meta: {
+        totalPosts,
+        currentPage: page,
+        totalPages,
+        limit,
+      },
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
     console.error(errorMessage);
@@ -262,6 +287,61 @@ export const toggleLike = async (req: Request, res: Response): Promise<void> => 
     ]);
 
     res.json(updatedPost);
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Server error';
+    console.error(errorMessage);
+    res.status(500).json({ error: errorMessage });
+  }
+};
+
+/**
+ * @desc    Search posts using AI-generated filters
+ * @access  Private (requires authentication)
+ * @body    query (string) - Natural language search query
+ * @query   page (default 1) - Page number for pagination
+ * @query   limit (default 10) - Number of posts per page
+ * @returns Object with posts array and metadata (totalPosts, currentPage, totalPages)
+ * @details Uses Gemini 3.1 to convert natural language queries to MongoDB filters
+ */
+export const aiSearch = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { query: searchQuery } = req.body;
+    const page = Math.max(1, parseInt(req.query.page as string) || 1); // Default to page 1
+    const limit = Math.max(1, parseInt(req.query.limit as string) || 10); // Default to 10 posts per page
+
+    // Basic validation
+    if (!searchQuery || typeof searchQuery !== 'string') {
+      res.status(400).json({ error: 'Search query is required and must be a string' });
+      return;
+    }
+
+    // TODO: Integrate with aiService.ts to generate MongoDB filter from query
+    // For now, return a placeholder response
+    const filter = {};
+
+    // Get total count for pagination metadata
+    const totalPosts = await Post.countDocuments(filter);
+
+    // Calculate pagination values
+    const skip = (page - 1) * limit;
+    const totalPages = Math.ceil(totalPosts / limit);
+
+    // Fetch paginated posts
+    const posts = await Post.find(filter)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    res.json({
+      posts,
+      meta: {
+        totalPosts,
+        currentPage: page,
+        totalPages,
+        limit,
+      },
+    });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
     console.error(errorMessage);
