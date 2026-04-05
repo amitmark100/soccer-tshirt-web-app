@@ -12,13 +12,13 @@ export const aiSearch = async (req: Request, res: Response) => {
         try {
             const filter = await generateFilterFromQuery(query);
             const posts = await Post.find(filter);
-            res.status(200).json(posts);
+            return res.status(200).json(posts);
         } catch (aiError: any) {
             console.error('AI Search service error:', aiError.message);
             return res.status(503).json({ message: 'AI Search is temporarily unavailable' });
         }
     } catch (error) {
         console.error('AI Search error:', error);
-        res.status(500).json({ message: 'Internal server error' });
+        return res.status(500).json({ message: 'Internal server error' });
     }
 };

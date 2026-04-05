@@ -371,7 +371,7 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
 
     // Upsert: Find user by email or googleId
     console.log('[Google Login] Step 4: Checking if user exists by email or googleId');
-    let user = await User.findOne({
+    let user: any = await User.findOne({
       $or: [{ email }, { googleId }],
     });
 
