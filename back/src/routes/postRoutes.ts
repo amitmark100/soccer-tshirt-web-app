@@ -1,12 +1,8 @@
 import { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware';
 import { uploadImage } from '../middleware/uploadMiddleware';
-<<<<<<< Updated upstream
 import { createPost, getPosts, getPostById, updatePost, deletePost, toggleLike } from '../controllers/postController';
-import { aiSearch } from '../controllers/aiController'; // Import aiSearch
-=======
-import { createPost, getPosts, getPostById, updatePost, deletePost, toggleLike, aiSearch } from '../controllers/postController';
->>>>>>> Stashed changes
+import { aiSearch } from '../controllers/aiController';
 
 const router = Router();
 
@@ -23,13 +19,6 @@ router.post('/', authMiddleware, uploadImage, createPost);
  * @access  Public
  */
 router.get('/', getPosts);
-
-/**
- * @route   POST /api/post/ai-search
- * @desc    Search posts using AI-generated filters
- * @access  Private (requires authentication)
- */
-router.post('/ai-search', authMiddleware, aiSearch);
 
 /**
  * @route   GET /api/post/:id
