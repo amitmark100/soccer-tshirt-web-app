@@ -14,18 +14,27 @@ interface JWTPayload {
  * @access  Public
  */
 export const register = async (req: Request, res: Response): Promise<void> => {
-  const { username, email, password } = req.body;
+  let { username, email, password } = req.body;
 
   // Basic validation
-  if (!username || !email || !password) {
-    res.status(400).json({ msg: 'Please enter all fields' });
+  if (!email || !password) {
+    console.log('[Register] Missing email or password');
+    res.status(400).json({ msg: 'Please enter email and password' });
     return;
   }
 
+  // Auto-generate username from email if not provided
+  if (!username) {
+    username = email.split('@')[0];
+    console.log('[Register] Auto-generating username from email:', username);
+  }
+
   try {
+    console.log('[Register] Attempting to register user:', email);
     // Check for existing user by email
     let user = await User.findOne({ email });
     if (user) {
+      console.log('[Register] User with email already exists:', email);
       res.status(400).json({ msg: 'User with this email already exists' });
       return;
     }
@@ -33,10 +42,12 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     // Check for existing user by username
     user = await User.findOne({ username });
     if (user) {
+      console.log('[Register] User with username already exists:', username);
       res.status(400).json({ msg: 'User with this username already exists' });
       return;
     }
 
+    console.log('[Register] Creating new user with email:', email, 'and username:', username);
     user = new User({
       username,
       email,
@@ -44,6 +55,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
 
     await user.save();
+    console.log('[Register] User saved, generating tokens');
 
     // Generate JWT Access Token
     const accessPayload: JWTPayload = {
@@ -65,6 +77,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     user.refreshTokens.push(refreshToken);
     await user.save();
 
+    console.log('[Register] Registration successful for user:', email);
     res.status(201).json({
       token: accessToken,
       refreshToken: refreshToken,
@@ -76,7 +89,8 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
-    console.error(errorMessage);
+    console.error('[Register] Error:', errorMessage);
+    console.error('[Register] Stack:', error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({ msg: errorMessage });
   }
 };
@@ -90,20 +104,24 @@ export const login = async (req: Request, res: Response): Promise<void> => {
 
   // Basic validation
   if (!email || !password) {
+    console.log('[Login] Missing email or password');
     res.status(400).json({ msg: 'Please enter all fields' });
     return;
   }
 
   try {
+    console.log('[Login] Attempting to authenticate user:', email);
     // Check if user exists and get password field
     const user = await User.findOne({ email }).select('+password');
     if (!user) {
+      console.log('[Login] User not found:', email);
       res.status(400).json({ msg: 'Invalid Credentials' });
       return;
     }
 
     // Check if user is a Google OAuth user (no password set)
     if (!user.password && user.googleId) {
+      console.log('[Login] User has Google OAuth but no password:', email);
       res.status(400).json({ msg: 'This account uses Google Sign-In. Please use the Google login option.' });
       return;
     }
@@ -111,10 +129,12 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     // Compare password
     const isMatch = await user.comparePassword(password);
     if (!isMatch) {
+      console.log('[Login] Password mismatch for user:', email);
       res.status(400).json({ msg: 'Invalid Credentials' });
       return;
     }
 
+    console.log('[Login] Password matched, generating tokens for user:', email);
     // Generate JWT Access Token
     const accessPayload: JWTPayload = {
       user: {
@@ -135,6 +155,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     user.refreshTokens.push(refreshToken);
     await user.save();
 
+    console.log('[Login] Login successful for user:', email);
     res.json({
       token: accessToken,
       refreshToken: refreshToken,
@@ -146,7 +167,8 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
-    console.error(errorMessage);
+    console.error('[Login] Error:', errorMessage);
+    console.error('[Login] Stack:', error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({ msg: errorMessage });
   }
 };

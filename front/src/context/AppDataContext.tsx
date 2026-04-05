@@ -42,11 +42,14 @@ export const AppDataProvider = ({ children }: AppDataProviderProps) => {
         }
 
         const nextLiked = !post.isLiked;
+        const newLikesArray = nextLiked
+          ? [...post.likes, 'current-user']
+          : post.likes.filter((id) => id !== 'current-user');
 
         return {
           ...post,
           isLiked: nextLiked,
-          likes: post.likes + (nextLiked ? 1 : -1)
+          likes: newLikesArray
         };
       });
     });
@@ -75,8 +78,8 @@ export const AppDataProvider = ({ children }: AppDataProviderProps) => {
 
         return {
           ...post,
-          comments: [...post.comments, newComment],
-          totalComments: post.totalComments + 1
+          comments: [...(post.comments || []), newComment],
+          totalComments: (post.totalComments || 0) + 1
         };
       });
     });
@@ -101,10 +104,24 @@ export const AppDataProvider = ({ children }: AppDataProviderProps) => {
       designImage: trimmedDesignImage,
       title: trimmedTitle,
       description: trimmedDescription,
-      likes: 0,
+      likes: [], // Changed from number to array
       isLiked: false,
       comments: [],
-      totalComments: 0
+      totalComments: 0,
+      text: trimmedDescription,
+      user: {
+        _id: profileUser.id,
+        username: profileUser.name.toLowerCase().replace(/\s+/g, ''),
+        email: 'user@example.com'
+      },
+      jerseyDetails: {
+        team: trimmedTitle,
+        league: 'Custom',
+        price: 0,
+        size: 'M',
+        imageUrl: trimmedDesignImage
+      },
+      commentsCount: 0
     };
 
     setPosts((currentPosts) => [newPost, ...currentPosts]);

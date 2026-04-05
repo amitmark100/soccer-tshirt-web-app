@@ -1,21 +1,103 @@
-import { ChangeEvent, FormEvent, useState } from 'react';
-import { User } from '../types/user';
+import { ChangeEvent, FormEvent, useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import apiClient from '../services/apiClient';
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    // Initialize Google Sign-In button (once)
+    if (window.google?.accounts?.id && googleButtonRef.current) {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      console.log('Google Client ID:', clientId ? 'set' : 'NOT SET');
+      
+      if (!clientId) {
+        console.warn('⚠️  VITE_GOOGLE_CLIENT_ID environment variable is not set. Google Sign-In will not work.');
+      }
+      
+      window.google.accounts.id.initialize({
+        client_id: clientId || '',
+        callback: handleGoogleResponse,
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: 'standard',
+        size: 'large',
+        text: 'signin',
+        locale: 'en',
+      });
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response: any) => {
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Send ID token to backend
+      const result = await apiClient.post('/auth/google', {
+        credential: response.credential,
+      });
+
+      const { token: accessToken, refreshToken, user } = result.data;
+
+      // Store tokens and user info
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('username', user.username);
+
+      // Redirect to feed
+      navigate('/');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Google login failed. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const usersData = localStorage.getItem('users');
-    const users: User[] = usersData ? JSON.parse(usersData) : [];
-    const user = users.find(user => user.email === email && user.password === password);
-    if (user) {
-      alert('Login successful!');
-    } else {
-      setError('Invalid email or password');
+    setError('');
+    setIsLoading(true);
+
+    try {
+      console.log('Sending login request with:', { email, password: '***' });
+      console.log('Full URL:', apiClient.defaults.baseURL + '/auth/login');
+      const response = await apiClient.post('/auth/login', { email, password });
+      console.log('Login response:', response.data);
+      const { token: accessToken, refreshToken, user } = response.data;
+
+      // Store tokens and user info
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('username', user.username);
+
+      // Redirect to feed
+      navigate('/');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Login failed. Please try again.';
+      console.error('Login error:', err);
+      setError(errorMessage);
+      alert('❌ Login Error:\n' + errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Redirect to backend Google OAuth endpoint
+      window.location.href = `${apiClient.defaults.baseURL}/auth/google`;
+    } catch (err) {
+      setError('Google login failed. Please try again.');
     }
   };
 
@@ -121,9 +203,10 @@ const Login = () => {
         <div>
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            disabled={isLoading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
-            Sign in
+            {isLoading ? 'Signing in...' : 'Sign in'}
           </button>
         </div>
       </form>
@@ -141,26 +224,15 @@ const Login = () => {
         </div>
 
         <div className="mt-6">
-          <div>
-            <a
-              href="#"
-              className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-            >
-              <span className="sr-only">Sign in with Google</span>
-              <svg
-                className="w-5 h-5"
-                aria-hidden="true"
-                fill="currentColor"
-                viewBox="0 0 20 20"
-              >
-                <path
-                  fillRule="evenodd"
-                  d="M10 0C4.477 0 0 4.477 0 10c0 4.418 2.865 8.166 6.838 9.49.5.092.682-.217.682-.482 0-.237-.009-.868-.014-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.031-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.378.203 2.398.1 2.651.64.7 1.03 1.595 1.03 2.688 0 3.848-2.338 4.695-4.566 4.942.359.308.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.001 10.001 0 0020 10c0-5.523-4.477-10-10-10z"
-                  clipRule="evenodd"
-                />
-              </svg>
-            </a>
-          </div>
+          <div ref={googleButtonRef} className="flex justify-center"></div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 mt-4"
+          >
+            <span className="sr-only">Sign in with Google</span>
+            Google Sign-In
+          </button>
         </div>
       </div>
 

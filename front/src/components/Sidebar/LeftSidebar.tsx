@@ -6,12 +6,6 @@ const HomeIcon = () => (
   </svg>
 );
 
-const ExploreIcon = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-    <path d="M21 3l-7.5 17-3-7-7-3L21 3zm-10 10l2 2 4-9-9 4 3 1z" />
-  </svg>
-);
-
 const CreateIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
     <path d="M11 11V4h2v7h7v2h-7v7h-2v-7H4v-2z" />
@@ -49,9 +43,6 @@ const LeftSidebar = () => {
           <NavLink to="/feed" end className={navClassName}>
             <HomeIcon /> Home
           </NavLink>
-          <a href="#" className="feed-nav-item">
-            <ExploreIcon /> Explore
-          </a>
           <NavLink to="/create" className={navClassName}>
             <CreateIcon /> Create
           </NavLink>
@@ -63,10 +54,7 @@ const LeftSidebar = () => {
         <section className="feed-collections">
           <h2>Collections</h2>
           <a href="#" className="feed-nav-item">
-            <FolderIcon /> My Collections
-          </a>
-          <a href="#" className="feed-nav-item">
-            <FolderIcon /> Saved Designs
+            <FolderIcon /> My Collection
           </a>
         </section>
       </div>

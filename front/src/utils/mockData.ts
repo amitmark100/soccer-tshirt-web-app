@@ -12,7 +12,7 @@ export const posts: Post[] = [
     designImage: 'https://images.unsplash.com/photo-1596005554384-d293674c91d7?auto=format&fit=crop&w=1200&q=80',
     title: 'New Manchester inspired kit design!',
     description: 'Bold red, black, and white textures with a streetwear edge. #manchester #kitdesign #soccerjersey',
-    likes: 2400,
+    likes: ['user-10', 'user-11', 'user-12'],
     isLiked: false,
     comments: [
       {
@@ -37,7 +37,12 @@ export const posts: Post[] = [
         userAvatar: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=80&q=80'
       }
     ],
-    totalComments: 284
+    totalComments: 284,
+    // Backend fields
+    user: { _id: 'user-1', username: 'jerseydesigner', email: 'designer@example.com' },
+    text: 'Bold red, black, and white textures with a streetwear edge. #manchester #kitdesign #soccerjersey',
+    jerseyDetails: { team: 'Manchester', league: 'Premier League', price: 49.99, size: 'M', imageUrl: 'https://images.unsplash.com/photo-1596005554384-d293674c91d7?auto=format&fit=crop&w=1200&q=80' },
+    commentsCount: 284
   },
   {
     id: 'post-2',
@@ -48,7 +53,7 @@ export const posts: Post[] = [
     designImage: 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb253?auto=format&fit=crop&w=1200&q=80',
     title: 'Vintage Brazil vibes',
     description: 'Bringing back the classic look with modern fabric details. #brazil #retrokit #football',
-    likes: 1800,
+    likes: ['user-10', 'user-11', 'user-12', 'user-13', 'user-14', 'user-15'],
     isLiked: true,
     comments: [
       {
@@ -73,7 +78,12 @@ export const posts: Post[] = [
         userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80'
       }
     ],
-    totalComments: 150
+    totalComments: 150,
+    // Backend fields
+    user: { _id: 'user-2', username: 'kitcreator', email: 'creator@example.com' },
+    text: 'Bringing back the classic look with modern fabric details. #brazil #retrokit #football',
+    jerseyDetails: { team: 'Brazil', league: 'International', price: 54.99, size: 'L', imageUrl: 'https://images.unsplash.com/photo-1522778526097-ce0a22ceb253?auto=format&fit=crop&w=1200&q=80' },
+    commentsCount: 150
   },
   {
     id: 'post-3',
@@ -85,7 +95,7 @@ export const posts: Post[] = [
     designImage: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80',
     title: 'Dark away concept',
     description: 'Minimal crest and geometric linework for night matches. #awaykit #concept',
-    likes: 975,
+    likes: ['user-10', 'user-11', 'user-12', 'user-13', 'user-14'],
     isLiked: false,
     comments: [
       {
@@ -103,7 +113,12 @@ export const posts: Post[] = [
         userAvatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=80&q=80'
       }
     ],
-    totalComments: 63
+    totalComments: 63,
+    // Backend fields
+    user: { _id: 'user-3', username: 'retrothreads', email: 'retro@example.com' },
+    text: 'Minimal crest and geometric linework for night matches. #awaykit #concept',
+    jerseyDetails: { team: 'Generic Away', league: 'Concep', price: 44.99, size: 'S', imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=80' },
+    commentsCount: 63
   }
 ];
 

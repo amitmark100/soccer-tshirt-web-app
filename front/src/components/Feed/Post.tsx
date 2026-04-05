@@ -48,21 +48,21 @@ const formatCompactCount = (count: number): string => {
 
 const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, onEditPost, onDeletePost }: PostProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [title, setTitle] = useState<string>(post.title);
-  const [description, setDescription] = useState<string>(post.description);
-  const [designImage, setDesignImage] = useState<string>(post.designImage);
+  const [title, setTitle] = useState<string>(post.title || '');
+  const [description, setDescription] = useState<string>(post.description || '');
+  const [designImage, setDesignImage] = useState<string>(post.designImage || '');
   const isPostOwner = post.userId === currentUserId;
 
   const handleEditSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onEditPost(post.id, { title, description, designImage });
+    onEditPost(post.id || '', { title, description, designImage });
     setIsEditing(false);
   };
 
   const handleStartEdit = () => {
-    setTitle(post.title);
-    setDescription(post.description);
-    setDesignImage(post.designImage);
+    setTitle(post.title || '');
+    setDescription(post.description || '');
+    setDesignImage(post.designImage || '');
     setIsEditing(true);
   };
 
@@ -71,6 +71,7 @@ const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, 
       <article className="feed-post-card">
         <form className="feed-edit-post-form" onSubmit={handleEditSubmit}>
           <h3>Edit Post</h3>
+          {designImage && <img src={designImage} alt="Current design" className="feed-edit-preview" style={{ maxWidth: '100%', maxHeight: '200px', objectFit: 'cover', marginBottom: '10px' }} />}
           <label className="feed-form-field">
             <span>Title</span>
             <input value={title} onChange={(event) => setTitle(event.target.value)} required />
@@ -114,7 +115,7 @@ const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, 
             <button type="button" className="feed-link-button" onClick={handleStartEdit}>
               Edit
             </button>
-            <button type="button" className="feed-link-button feed-delete-btn" onClick={() => onDeletePost(post.id)}>
+            <button type="button" className="feed-link-button feed-delete-btn" onClick={() => onDeletePost(post.id || '')}>
               Delete
             </button>
           </div>
@@ -122,18 +123,24 @@ const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, 
       </header>
 
       <button type="button" className="feed-preview-trigger" onClick={() => onOpenPreview(post)} aria-label="Open post preview">
-        <img src={post.designImage} alt={post.title} className="feed-post-image" />
+        {post.designImage ? (
+          <img src={post.designImage} alt={post.title} className="feed-post-image" />
+        ) : (
+          <div className="feed-post-image" style={{ background: '#ccc', minHeight: '300px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+            No image
+          </div>
+        )}
       </button>
 
       <div className="feed-post-stats">
         <button
           type="button"
           className={`feed-stat ${post.isLiked ? 'active' : ''}`}
-          onClick={() => onToggleLike(post.id)}
+          onClick={() => onToggleLike(post.id || '')}
           aria-label={post.isLiked ? 'Unlike post' : 'Like post'}
         >
           <HeartIcon filled={post.isLiked} />
-          <span>{formatCompactCount(post.likes)} likes</span>
+          <span>{formatCompactCount(post.likes.length || 0)} likes</span>
         </button>
 
         <div className="feed-stat">
@@ -148,8 +155,8 @@ const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, 
       </button>
 
       <CommentSection
-        postId={post.id}
-        comments={post.comments}
+        postId={post.id || ''}
+        comments={post.comments || []}
         totalComments={post.totalComments}
         onAddComment={onAddComment}
       />

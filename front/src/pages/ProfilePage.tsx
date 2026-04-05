@@ -98,13 +98,13 @@ const ProfilePage = () => {
   const postsCount = userPosts.length;
   const profilePostDesigns = userPosts.map((post) => ({
     id: `profile-post-${post.id}`,
-    title: post.title,
-    image: post.designImage,
-    likes: post.likes,
-    views: Math.max(300, post.totalComments * 25 + post.likes * 2),
+    title: post.title || '',
+    image: post.designImage || '',
+    likes: post.likes.length,
+    views: Math.max(300, (post.totalComments || 0) * 25 + (post.likes?.length || 0) * 2),
     isLiked: post.isLiked,
     createdAt: post.timestamp,
-    description: post.description
+    description: post.description || ''
   }));
   const handleDesignLike = (designId: string) => {
     if (designId.startsWith('profile-post-')) {

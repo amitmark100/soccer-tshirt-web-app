@@ -1,5 +1,6 @@
-import { ChangeEvent, FormEvent, useState } from 'react';
-import { User } from '../types/user';
+import { ChangeEvent, FormEvent, useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import apiClient from '../services/apiClient';
 
 const SignUp = () => {
   const [email, setEmail] = useState('');
@@ -7,24 +8,107 @@ const SignUp = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
+  const googleButtonRef = useRef<HTMLDivElement>(null);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    // Initialize Google Sign-In button (once)
+    if (window.google?.accounts?.id && googleButtonRef.current) {
+      const clientId = import.meta.env.VITE_GOOGLE_CLIENT_ID;
+      console.log('Google Client ID:', clientId ? 'set' : 'NOT SET');
+      
+      if (!clientId) {
+        console.warn('⚠️  VITE_GOOGLE_CLIENT_ID environment variable is not set. Google Sign-In will not work.');
+      }
+      
+      window.google.accounts.id.initialize({
+        client_id: clientId || '',
+        callback: handleGoogleResponse,
+      });
+      window.google.accounts.id.renderButton(googleButtonRef.current, {
+        type: 'standard',
+        size: 'large',
+        text: 'signup',
+        locale: 'en',
+      });
+    }
+  }, []);
+
+  const handleGoogleResponse = async (response: any) => {
+    try {
+      setIsLoading(true);
+      setError('');
+
+      // Send ID token to backend
+      const result = await apiClient.post('/auth/google', {
+        credential: response.credential,
+      });
+
+      const { token: accessToken, refreshToken, user } = result.data;
+
+      // Store tokens and user info
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('username', user.username);
+
+      // Redirect to feed
+      navigate('/');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || 'Google sign up failed. Please try again.';
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    
     if (password !== confirmPassword) {
       setError('Passwords do not match');
+      alert('❌ Error:\nPasswords do not match');
       return;
     }
-    const usersData = localStorage.getItem('users');
-    const users: User[] = usersData ? JSON.parse(usersData) : [];
-    const userExists = users.some(user => user.email === email);
-    if (userExists) {
-      setError('User with this email already exists');
-      return;
+
+    setError('');
+    setIsLoading(true);
+
+    try {
+      console.log('Sending signup request with:', { email, password: '***' });
+      console.log('Full URL:', apiClient.defaults.baseURL + '/auth/register');
+      // Generate username from email (part before @)
+      const username = email.split('@')[0];
+      const response = await apiClient.post('/auth/register', { username, email, password });
+      console.log('Signup response:', response.data);
+      const { token: accessToken, refreshToken, user } = response.data;
+
+      // Store tokens and user info
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('userId', user.id);
+      localStorage.setItem('username', user.username);
+
+      // Redirect to feed
+      navigate('/');
+    } catch (err: any) {
+      const errorMessage = err.response?.data?.message || err.message || 'Registration failed. Please try again.';
+      console.error('Signup error:', err);
+      setError(errorMessage);
+      alert('❌ Registration Error:\n' + errorMessage);
+    } finally {
+      setIsLoading(false);
     }
-    const newUser: User = { email, password };
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    alert('Sign up successful!');
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      // Redirect to backend Google OAuth endpoint
+      window.location.href = `${apiClient.defaults.baseURL}/auth/google`;
+    } catch (err) {
+      setError('Google sign up failed. Please try again.');
+    }
   };
 
   return (
@@ -150,13 +234,38 @@ const SignUp = () => {
         <div>
           <button
             type="submit"
-            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+            disabled={isLoading}
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
           >
-            Sign up
+            {isLoading ? 'Signing up...' : 'Sign up'}
           </button>
         </div>
       </form>
 
+      <div className="mt-6">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">
+              Or continue with
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-6">
+          <div ref={googleButtonRef} className="flex justify-center"></div>
+          <button
+            type="button"
+            onClick={handleGoogleLogin}
+            className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 mt-4"
+          >
+            <span className="sr-only">Sign up with Google</span>
+            Google Sign-Up
+          </button>
+        </div>
+      </div>
     </div>
   );
 };

@@ -6,8 +6,33 @@ export interface Comment {
   userAvatar: string;
 }
 
+export interface User {
+  _id: string;
+  username: string;
+  email: string;
+  profilePicture?: string;
+}
+
+export interface JerseyDetails {
+  team: string;
+  league: string;
+  price: number;
+  size: string;
+  imageUrl: string;
+}
+
 export interface Post {
+  _id?: string;
   id: string;
+  user: User;
+  text: string;
+  image?: string;
+  jerseyDetails: JerseyDetails;
+  likes: string[]; // Array of user IDs
+  commentsCount: number;
+  createdAt?: string;
+  updatedAt?: string;
+  // Legacy properties (provided by adapter for backward compatibility)
   userId: string;
   username: string;
   userAvatar: string;
@@ -16,10 +41,9 @@ export interface Post {
   designImage: string;
   title: string;
   description: string;
-  likes: number;
   isLiked: boolean;
-  comments: Comment[];
   totalComments: number;
+  comments: Comment[];
 }
 
 export interface SuggestedUser {

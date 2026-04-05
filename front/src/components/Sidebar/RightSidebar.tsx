@@ -15,18 +15,19 @@ const RightSidebar = ({ posts }: RightSidebarProps) => {
 
     posts.forEach((post) => {
       const existing = usersById.get(post.userId);
+      const likesCount = post.likes?.length ?? 0;
 
       if (!existing) {
         usersById.set(post.userId, {
           id: post.userId,
           username: post.username,
           userAvatar: post.userAvatar,
-          totalLikes: post.likes
+          totalLikes: likesCount
         });
         return;
       }
 
-      existing.totalLikes += post.likes;
+      existing.totalLikes += likesCount;
     });
 
     return [...usersById.values()].sort((a, b) => b.totalLikes - a.totalLikes).slice(0, 3);
