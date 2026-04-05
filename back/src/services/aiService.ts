@@ -27,7 +27,7 @@ export async function generateFilterFromQuery(query: string): Promise<any> {
             throw new Error(`Gemini API error: ${response.status} - ${errorBody}`);
         }
 
-        const data = await response.json();
+        const data = (await response.json()) as any;
 
         // Extract the text from the response
         const responseText = data.candidates[0].content.parts[0].text;
