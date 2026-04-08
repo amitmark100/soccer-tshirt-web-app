@@ -36,45 +36,43 @@ app.get('/', (_req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+const shouldUseHttps = process.env.USE_HTTPS === 'true';
 
-// Start server
 async function startServer(): Promise<void> {
   try {
     await connectDB();
 
-    // Check for SSL certificate files for HTTPS
     const keyPath = path.join(__dirname, '../server.key');
     const certPath = path.join(__dirname, '../server.cert');
     const hasSSL = fs.existsSync(keyPath) && fs.existsSync(certPath);
 
-    if (hasSSL) {
-      // HTTPS mode: Load SSL certificates
+    if (shouldUseHttps && hasSSL) {
       const privateKey = fs.readFileSync(keyPath, 'utf8');
       const certificate = fs.readFileSync(certPath, 'utf8');
       const credentials = { key: privateKey, cert: certificate };
 
       const httpsServer = https.createServer(credentials, app);
       httpsServer.listen(PORT, () => {
-        console.log(`🔒 Server listening on https://localhost:${PORT}`);
+        console.log(`Server listening on https://localhost:${PORT}`);
         console.log('SSL certificates loaded successfully');
       });
-    } else {
-      // HTTP fallback: If SSL files missing, start without HTTPS
+      return;
+    }
+
+    if (shouldUseHttps && !hasSSL) {
+      console.warn('SSL certificate files not found (server.key, server.cert)');
       console.warn(
-        '⚠️  SSL certificate files not found (server.key, server.cert)'
+        'Falling back to HTTP mode. To enable HTTPS, generate certificates using:'
       );
       console.warn(
-        '   Falling back to HTTP mode. To enable HTTPS, generate certificates using:'
-      );
-      console.warn(
-        "   openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.cert -days 365 -nodes"
+        'openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.cert -days 365 -nodes'
       );
       console.warn('');
-
-      app.listen(PORT, () => {
-        console.log(`Server listening on http://localhost:${PORT}`);
-      });
     }
+
+    app.listen(PORT, () => {
+      console.log(`Server listening on http://localhost:${PORT}`);
+    });
   } catch (error) {
     console.error('Failed to start server:', error);
     process.exit(1);

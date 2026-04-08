@@ -25,8 +25,8 @@ POST https://localhost:5000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "soccerfan177",
-  "email": "soccerfan177@example.com",
+  "username": "soccerfan180",
+  "email": "soccerfan180@example.com",
   "password": "SecurePass123"
 }
 

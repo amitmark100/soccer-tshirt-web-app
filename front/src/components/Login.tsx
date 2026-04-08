@@ -1,14 +1,27 @@
-import { ChangeEvent, FormEvent, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { User } from '../types/user';
 
 const Login = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+
+  useEffect(() => {
+    const authMessage = location.state?.authMessage;
+    if (authMessage) {
+      setMessage(authMessage);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
 
   const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
     const usersData = localStorage.getItem('users');
     const users: User[] = usersData ? JSON.parse(usersData) : [];
     const user = users.find(user => user.email === email && user.password === password);
@@ -111,6 +124,12 @@ const Login = () => {
             </div>
           </div>
         </div>
+
+        {message && (
+          <div>
+            <p className="text-sm text-green-600">{message}</p>
+          </div>
+        )}
 
         {error && (
           <div>

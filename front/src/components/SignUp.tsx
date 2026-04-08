@@ -1,35 +1,106 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
-import { User } from '../types/user';
+import { useNavigate } from 'react-router-dom';
+import Loader from './Loader/Loader';
+
+const REGISTER_URL = 'http://localhost:5000/api/auth/register';
+const MIN_SIGNUP_LOADER_MS = 3000;
+
+const waitForMinimumTime = async (startedAt: number, minimumMs: number) => {
+  const elapsed = Date.now() - startedAt;
+
+  if (elapsed < minimumMs) {
+    await new Promise(resolve => setTimeout(resolve, minimumMs - elapsed));
+  }
+};
 
 const SignUp = () => {
+  const navigate = useNavigate();
+  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    setError('');
+    const startedAt = Date.now();
+
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setError('Please enter all fields');
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
-    const usersData = localStorage.getItem('users');
-    const users: User[] = usersData ? JSON.parse(usersData) : [];
-    const userExists = users.some(user => user.email === email);
-    if (userExists) {
-      setError('User with this email already exists');
-      return;
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(REGISTER_URL, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          username: username.trim(),
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      await waitForMinimumTime(startedAt, MIN_SIGNUP_LOADER_MS);
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setError(data?.msg || 'Sign up failed');
+        return;
+      }
+
+      navigate('/auth', {
+        replace: true,
+        state: {
+          authMode: 'login',
+          authMessage: 'Sign up successful. Please log in.',
+        },
+      });
+    } catch {
+      await waitForMinimumTime(startedAt, MIN_SIGNUP_LOADER_MS);
+      setError('Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
-    const newUser: User = { email, password };
-    users.push(newUser);
-    localStorage.setItem('users', JSON.stringify(users));
-    alert('Sign up successful!');
   };
 
   return (
     <div>
       <form onSubmit={handleSubmit} className="space-y-6">
+        <div>
+          <label
+            htmlFor="username"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Username
+          </label>
+          <div className="mt-1">
+            <input
+              id="username"
+              name="username"
+              type="text"
+              autoComplete="username"
+              required
+              value={username}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+              className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
+            />
+          </div>
+        </div>
+
         <div>
           <label
             htmlFor="email"
@@ -150,9 +221,10 @@ const SignUp = () => {
         <div>
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Sign up
+            {isSubmitting ? <Loader label="Creating account..." /> : 'Sign up'}
           </button>
         </div>
       </form>
