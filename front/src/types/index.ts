@@ -1,13 +1,14 @@
 export interface User {
   id: string;
   name: string;
-  bio: string;
-  location: string;
+  email: string;
   joinDate: string;
   avatar: string;
   bannerImage: string;
-  isVerified: boolean;
-  postsCount: number;
+  isVerified?: boolean;
+  bio?: string;
+  location?: string;
+  postsCount?: number;
 }
 
 export interface Design {
@@ -19,6 +20,10 @@ export interface Design {
   isLiked: boolean;
   createdAt: string;
   description: string;
+  team?: string;
+  league?: string;
+  price?: number;
+  size?: string;
 }
 
 export interface ProfileProps {

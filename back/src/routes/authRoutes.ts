@@ -1,7 +1,7 @@
 import { Router } from 'express';
 import authMiddleware from '../middleware/authMiddleware';
 import { uploadAvatar } from '../middleware/uploadMiddleware';
-import { register, login, updateUserProfile, logout, googleLogin, refreshToken } from '../controllers/authController';
+import { register, login, updateUserProfile, logout, googleLogin, refreshToken, getCurrentUser } from '../controllers/authController';
 
 const router = Router();
 
@@ -18,6 +18,13 @@ router.post('/register', register);
  * @access  Public
  */
 router.post('/login', login);
+
+/**
+ * @route   GET /api/auth/me
+ * @desc    Get current authenticated user
+ * @access  Private (requires authentication)
+ */
+router.get('/me', authMiddleware, getCurrentUser);
 
 /**
  * @route   PUT /api/auth/user/:userId

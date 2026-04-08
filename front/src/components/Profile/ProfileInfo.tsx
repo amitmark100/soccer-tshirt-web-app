@@ -1,5 +1,5 @@
 import { BsPatchCheckFill } from 'react-icons/bs';
-import { FiCalendar, FiMapPin } from 'react-icons/fi';
+import { FiCalendar, FiMail } from 'react-icons/fi';
 
 import { User } from '../../types';
 import { formatJoinDate } from '../../utils/formatters';
@@ -30,16 +30,15 @@ const ProfileInfo = ({
           <h1>{user.name}</h1>
           {user.isVerified ? <VerifiedBadge /> : null}
         </div>
-        <div className="profile-actions">
+      <div className="profile-actions">
           <button type="button" className="profile-outline-btn" onClick={onOpenEdit}>
             Edit Profile
           </button>
         </div>
       </div>
-      <p className="profile-bio">{user.bio}</p>
       <div className="profile-meta">
         <span>
-          <FiMapPin size={15} /> {user.location}
+          <FiMail size={15} /> {user.email}
         </span>
         <span>
           <FiCalendar size={15} /> Joined {formatJoinDate(user.joinDate)}

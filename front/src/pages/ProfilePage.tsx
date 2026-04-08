@@ -1,4 +1,4 @@
-import { FormEvent, useEffect, useState } from 'react';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 
 import PostPreviewModal from '../components/Common/PostPreviewModal';
 import DesignGrid from '../components/Profile/DesignGrid';
@@ -6,39 +6,42 @@ import ProfileHeader from '../components/Profile/ProfileHeader';
 import ProfileInfo from '../components/Profile/ProfileInfo';
 import ProfileStats from '../components/Profile/ProfileStats';
 import LeftSidebar from '../components/Sidebar/LeftSidebar';
-import { useAppData } from '../context/AppDataContext';
 import { useProfile } from '../hooks/useProfile';
 import { Design, User } from '../types';
 import '../styles/ProfilePage.css';
 
 interface EditProfileModalProps {
   user: User;
-  onSave: (updates: Pick<User, 'name' | 'bio' | 'location' | 'joinDate'>) => void;
+  onSave: (updates: { name: string; avatar?: File | null }) => Promise<void>;
   onClose: () => void;
 }
 
 const EditProfileModal = ({ user, onSave, onClose }: EditProfileModalProps) => {
-  const [name, setName] = useState<string>(user.name);
-  const [bio, setBio] = useState<string>(user.bio);
-  const [location, setLocation] = useState<string>(user.location);
-  const [joinDate, setJoinDate] = useState<string>(user.joinDate);
+  const [name, setName] = useState(user.name);
+  const [avatar, setAvatar] = useState<File | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     setName(user.name);
-    setBio(user.bio);
-    setLocation(user.location);
-    setJoinDate(user.joinDate);
+    setAvatar(null);
   }, [user]);
 
-  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setAvatar(event.target.files?.[0] || null);
+  };
 
-    onSave({
-      name: name.trim(),
-      bio: bio.trim(),
-      location: location.trim(),
-      joinDate
-    });
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setIsSaving(true);
+
+    try {
+      await onSave({
+        name: name.trim(),
+        avatar,
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -47,28 +50,20 @@ const EditProfileModal = ({ user, onSave, onClose }: EditProfileModalProps) => {
         <h2>Edit Profile</h2>
         <div className="profile-form-grid">
           <label className="profile-form-field">
-            <span>Name</span>
+            <span>Username</span>
             <input value={name} onChange={(event) => setName(event.target.value)} required />
           </label>
           <label className="profile-form-field">
-            <span>Location</span>
-            <input value={location} onChange={(event) => setLocation(event.target.value)} required />
-          </label>
-          <label className="profile-form-field">
-            <span>Join Date</span>
-            <input type="date" value={joinDate} onChange={(event) => setJoinDate(event.target.value)} required />
-          </label>
-          <label className="profile-form-field">
-            <span>Bio</span>
-            <textarea value={bio} onChange={(event) => setBio(event.target.value)} rows={3} required />
+            <span>Profile Image</span>
+            <input type="file" accept="image/png,image/jpeg,image/webp,image/gif" onChange={handleFileChange} />
           </label>
         </div>
         <div className="profile-modal-actions">
           <button type="button" className="profile-outline-btn" onClick={onClose}>
             Cancel
           </button>
-          <button type="submit" className="profile-primary-btn">
-            Save Changes
+          <button type="submit" className="profile-primary-btn" disabled={isSaving}>
+            {isSaving ? 'Saving...' : 'Save Changes'}
           </button>
         </div>
       </form>
@@ -79,68 +74,42 @@ const EditProfileModal = ({ user, onSave, onClose }: EditProfileModalProps) => {
 const ProfilePage = () => {
   const {
     user,
-    completionPercent,
-    isProfileComplete,
+    postsCount,
+    designs,
+    isLoading,
+    errorMessage,
     saveProfile,
+    togglePostLike,
+    editPost,
+    deletePost,
     isEditModalOpen,
     openEditModal,
-    closeEditModal
+    closeEditModal,
   } = useProfile();
-  const { posts, currentUserId, toggleLike: togglePostLike, editPost, deletePost } = useAppData();
   const [editingPost, setEditingPost] = useState<{
     postId: string;
-    title: string;
+    team: string;
+    league: string;
+    price: string;
+    size: string;
     description: string;
-    designImage: string;
   } | null>(null);
   const [selectedDesign, setSelectedDesign] = useState<Design | null>(null);
-  const userPosts = posts.filter((post) => post.userId === currentUserId);
-  const postsCount = userPosts.length;
-  const profilePostDesigns = userPosts.map((post) => ({
-    id: `profile-post-${post.id}`,
-    title: post.title,
-    image: post.designImage,
-    likes: post.likes,
-    views: Math.max(300, post.totalComments * 25 + post.likes * 2),
-    isLiked: post.isLiked,
-    createdAt: post.timestamp,
-    description: post.description
-  }));
-  const handleDesignLike = (designId: string) => {
-    if (designId.startsWith('profile-post-')) {
-      togglePostLike(designId.replace('profile-post-', ''));
-    }
-  };
-
-  const canManageProfileDesign = (designId: string) => designId.startsWith('profile-post-');
 
   const handleEditDesign = (designId: string) => {
-    if (!designId.startsWith('profile-post-')) {
-      return;
-    }
-
-    const postId = designId.replace('profile-post-', '');
-    const post = posts.find((currentPost) => currentPost.id === postId);
-
-    if (!post) {
+    const design = designs.find((currentDesign) => currentDesign.id === designId);
+    if (!design) {
       return;
     }
 
     setEditingPost({
-      postId,
-      title: post.title,
-      description: post.description,
-      designImage: post.designImage
+      postId: designId,
+      team: design.team || '',
+      league: design.league || '',
+      price: String(design.price || 1),
+      size: design.size || 'M',
+      description: design.description,
     });
-  };
-
-  const handleDeleteDesign = (designId: string) => {
-    if (!designId.startsWith('profile-post-')) {
-      return;
-    }
-
-    const postId = designId.replace('profile-post-', '');
-    deletePost(postId);
   };
 
   const handleSaveEditedPost = (event: FormEvent<HTMLFormElement>) => {
@@ -151,12 +120,40 @@ const ProfilePage = () => {
     }
 
     editPost(editingPost.postId, {
-      title: editingPost.title,
+      team: editingPost.team,
+      league: editingPost.league,
+      price: Number(editingPost.price),
+      size: editingPost.size,
       description: editingPost.description,
-      designImage: editingPost.designImage
     });
     setEditingPost(null);
   };
+
+  if (isLoading) {
+    return (
+      <div className="profile-layout">
+        <LeftSidebar />
+        <main className="profile-main">
+          <div className="profile-content">
+            <p className="profile-empty-state">Loading profile...</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="profile-layout">
+        <LeftSidebar />
+        <main className="profile-main">
+          <div className="profile-content">
+            <p className="profile-empty-state">{errorMessage || 'Unable to load profile.'}</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className="profile-layout">
@@ -166,18 +163,18 @@ const ProfilePage = () => {
           <ProfileHeader user={user} onOpenEdit={openEditModal} />
           <ProfileInfo
             user={user}
-            completionPercent={completionPercent}
-            isProfileComplete={isProfileComplete}
+            completionPercent={user.avatar ? 100 : 75}
+            isProfileComplete={Boolean(user.avatar)}
             onOpenEdit={openEditModal}
           />
           <ProfileStats postsCount={postsCount} />
           <DesignGrid
-            designs={profilePostDesigns}
+            designs={designs}
             onOpenPreview={setSelectedDesign}
-            onToggleLike={handleDesignLike}
-            canManageDesign={canManageProfileDesign}
+            onToggleLike={togglePostLike}
+            canManageDesign={() => true}
             onEditDesign={handleEditDesign}
-            onDeleteDesign={handleDeleteDesign}
+            onDeleteDesign={deletePost}
           />
         </div>
       </main>
@@ -188,14 +185,52 @@ const ProfilePage = () => {
             <h2>Edit Post</h2>
             <div className="profile-form-grid">
               <label className="profile-form-field">
-                <span>Title</span>
+                <span>Team</span>
                 <input
-                  value={editingPost.title}
+                  value={editingPost.team}
                   onChange={(event) =>
-                    setEditingPost((current) => (current ? { ...current, title: event.target.value } : null))
+                    setEditingPost((current) => (current ? { ...current, team: event.target.value } : null))
                   }
                   required
                 />
+              </label>
+              <label className="profile-form-field">
+                <span>League</span>
+                <input
+                  value={editingPost.league}
+                  onChange={(event) =>
+                    setEditingPost((current) => (current ? { ...current, league: event.target.value } : null))
+                  }
+                  required
+                />
+              </label>
+              <label className="profile-form-field">
+                <span>Price</span>
+                <input
+                  type="number"
+                  min="1"
+                  step="0.01"
+                  value={editingPost.price}
+                  onChange={(event) =>
+                    setEditingPost((current) => (current ? { ...current, price: event.target.value } : null))
+                  }
+                  required
+                />
+              </label>
+              <label className="profile-form-field">
+                <span>Size</span>
+                <select
+                  value={editingPost.size}
+                  onChange={(event) =>
+                    setEditingPost((current) => (current ? { ...current, size: event.target.value } : null))
+                  }
+                >
+                  {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((sizeOption) => (
+                    <option key={sizeOption} value={sizeOption}>
+                      {sizeOption}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="profile-form-field">
                 <span>Description</span>
@@ -204,16 +239,6 @@ const ProfilePage = () => {
                   value={editingPost.description}
                   onChange={(event) =>
                     setEditingPost((current) => (current ? { ...current, description: event.target.value } : null))
-                  }
-                  required
-                />
-              </label>
-              <label className="profile-form-field">
-                <span>Image URL</span>
-                <input
-                  value={editingPost.designImage}
-                  onChange={(event) =>
-                    setEditingPost((current) => (current ? { ...current, designImage: event.target.value } : null))
                   }
                   required
                 />
@@ -235,7 +260,7 @@ const ProfilePage = () => {
         title={selectedDesign?.title ?? ''}
         description={selectedDesign?.description ?? ''}
         image={selectedDesign?.image ?? ''}
-        creatorLabel={`@${user.name.toLowerCase().replace(/\s+/g, '')}`}
+        creatorLabel={`@${user.name}`}
         timestamp={selectedDesign?.createdAt ?? ''}
         likes={selectedDesign?.likes ?? 0}
         secondaryMetricLabel="views"

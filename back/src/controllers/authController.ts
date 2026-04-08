@@ -135,6 +135,7 @@ export const register = async (req: Request, res: Response): Promise<void> => {
       id: user._id.toString(),
       username: user.username,
       email: user.email,
+      profilePicture: user.profilePicture,
     };
 
     setAuthCookies(res, accessToken, refreshToken, responseUser);
@@ -208,6 +209,7 @@ export const login = async (req: Request, res: Response): Promise<void> => {
       id: user._id.toString(),
       username: user.username,
       email: user.email,
+      profilePicture: user.profilePicture,
     };
 
     setAuthCookies(res, accessToken, refreshToken, responseUser);
@@ -220,6 +222,35 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
     console.error(errorMessage);
     res.status(500).json({ msg: errorMessage });
+  }
+};
+
+/**
+ * @desc    Get current authenticated user
+ * @access  Private (requires authentication)
+ */
+export const getCurrentUser = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const user = await User.findById(req.user!._id).lean();
+
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    res.json({
+      user: {
+        id: user._id.toString(),
+        username: user.username,
+        email: user.email,
+        profilePicture: user.profilePicture,
+        createdAt: user.createdAt,
+      },
+    });
+  } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Server error';
+    console.error(errorMessage);
+    res.status(500).json({ error: errorMessage });
   }
 };
 
@@ -266,13 +297,25 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
     }
 
     // Return updated user info (without password)
-    res.json({
-      msg: 'User profile updated successfully',
-      user: {
-        id: updatedUser._id,
+    res.cookie(
+      AUTH_USER_COOKIE,
+      JSON.stringify({
+        id: updatedUser._id.toString(),
         username: updatedUser.username,
         email: updatedUser.email,
         profilePicture: updatedUser.profilePicture,
+      }),
+      getCookieOptions(REFRESH_TOKEN_MAX_AGE_MS, false)
+    );
+
+    res.json({
+      msg: 'User profile updated successfully',
+      user: {
+        id: updatedUser._id.toString(),
+        username: updatedUser.username,
+        email: updatedUser.email,
+        profilePicture: updatedUser.profilePicture,
+        createdAt: updatedUser.createdAt,
       },
     });
   } catch (error) {

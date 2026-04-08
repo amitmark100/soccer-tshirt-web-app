@@ -12,13 +12,23 @@ const ProfileHeader = ({ user, onOpenEdit }: ProfileHeaderProps) => {
   return (
     <section className="profile-header">
       <div className="profile-banner-wrap">
-        <img src={user.bannerImage} alt={`${user.name} banner`} className="profile-banner" />
+        {user.bannerImage ? (
+          <img src={user.bannerImage} alt={`${user.name} banner`} className="profile-banner" />
+        ) : (
+          <div className="profile-banner profile-banner-placeholder" aria-hidden="true" />
+        )}
         <button type="button" className="profile-banner-edit-btn" onClick={onOpenEdit} aria-label="Edit banner">
           <FiEdit2 size={18} />
         </button>
       </div>
       <div className="profile-avatar-wrap">
-        <img src={user.avatar} alt={user.name} className="profile-avatar" />
+        {user.avatar ? (
+          <img src={user.avatar} alt={user.name} className="profile-avatar" />
+        ) : (
+          <div className="profile-avatar profile-avatar-placeholder" aria-hidden="true">
+            {user.name.slice(0, 1).toUpperCase()}
+          </div>
+        )}
         {user.isVerified ? (
           <span className="profile-avatar-badge" aria-label="Verified user">
             <BsPatchCheckFill size={13} />

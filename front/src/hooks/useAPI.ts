@@ -41,6 +41,16 @@ interface PostsResponse {
   posts: BackendPost[];
 }
 
+interface CurrentUserResponse {
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    profilePicture: string | null;
+    createdAt: string;
+  };
+}
+
 const toAbsoluteUrl = (value: string | null | undefined) => {
   if (!value) {
     return '';
@@ -90,12 +100,15 @@ const mapBackendPostToFeedPost = (
   comments: BackendComment[] = []
 ): Post => {
   const authUser = getAuthUser();
+  const currentUserAvatar =
+    authUser?.id === post.user._id ? toAbsoluteUrl(authUser.profilePicture) : '';
 
   return {
     id: post._id,
     userId: post.user._id,
     username: post.user.username,
     userAvatar:
+      currentUserAvatar ||
       toAbsoluteUrl(post.user.profilePicture) ||
       'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80',
     timestamp: formatTimestamp(post.createdAt),
@@ -157,6 +170,19 @@ export const useAPI = () => {
               body: JSON.stringify(payload),
             }
           ),
+        me: () => request<CurrentUserResponse>('/api/auth/me'),
+        updateProfile: (userId: string, payload: { username: string; avatar?: File | null }) => {
+          const formData = new FormData();
+          formData.append('username', payload.username);
+          if (payload.avatar) {
+            formData.append('avatar', payload.avatar);
+          }
+
+          return request<CurrentUserResponse>('/api/auth/user/' + userId, {
+            method: 'PUT',
+            body: formData,
+          });
+        },
         logout: () =>
           request<{ msg: string }>('/api/auth/logout', {
             method: 'POST',
@@ -185,6 +211,23 @@ export const useAPI = () => {
             method: 'POST',
             body: formData,
           }),
+        getUserPosts: async (userId: string): Promise<Post[]> => {
+          const [postsData, commentsData] = await Promise.all([
+            request<PostsResponse>(`/api/post?userId=${encodeURIComponent(userId)}`),
+            request<BackendComment[]>('/api/comments'),
+          ]);
+
+          const commentsByPost = new Map<string, BackendComment[]>();
+          for (const comment of commentsData) {
+            const existing = commentsByPost.get(comment.postId) || [];
+            existing.push(comment);
+            commentsByPost.set(comment.postId, existing);
+          }
+
+          return postsData.posts.map((post) =>
+            mapBackendPostToFeedPost(post, commentsByPost.get(post._id) || [])
+          );
+        },
         toggleLike: (postId: string) =>
           request<BackendPost>(`/api/post/${postId}/like`, {
             method: 'PATCH',
