@@ -18,8 +18,15 @@ if (!fs.existsSync(uploadsDir)) {
   console.log('Created uploads directory:', uploadsDir);
 }
 
+const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: frontendOrigin,
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Serve uploaded files as static assets

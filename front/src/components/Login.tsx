@@ -1,6 +1,18 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { User } from '../types/user';
+import Loader from './Loader/Loader';
+import { broadcastAuthChange } from '../utils/authCookies';
+
+const LOGIN_URL = 'http://localhost:5000/api/auth/login';
+const MIN_LOGIN_LOADER_MS = 3000;
+
+const waitForMinimumTime = async (startedAt: number, minimumMs: number) => {
+  const elapsed = Date.now() - startedAt;
+
+  if (elapsed < minimumMs) {
+    await new Promise(resolve => setTimeout(resolve, minimumMs - elapsed));
+  }
+};
 
 const Login = () => {
   const location = useLocation();
@@ -10,6 +22,7 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     const authMessage = location.state?.authMessage;
@@ -19,16 +32,49 @@ const Login = () => {
     }
   }, [location.pathname, location.state, navigate]);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError('');
-    const usersData = localStorage.getItem('users');
-    const users: User[] = usersData ? JSON.parse(usersData) : [];
-    const user = users.find(user => user.email === email && user.password === password);
-    if (user) {
-      alert('Login successful!');
-    } else {
-      setError('Invalid email or password');
+    setMessage('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter all fields');
+      return;
+    }
+
+    const startedAt = Date.now();
+
+    try {
+      setIsSubmitting(true);
+
+      const response = await fetch(LOGIN_URL, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.trim(),
+          password,
+        }),
+      });
+
+      await waitForMinimumTime(startedAt, MIN_LOGIN_LOADER_MS);
+
+      const data = await response.json().catch(() => null);
+
+      if (!response.ok) {
+        setError(data?.msg || 'Login failed');
+        return;
+      }
+
+      broadcastAuthChange();
+      navigate('/feed', { replace: true });
+    } catch {
+      await waitForMinimumTime(startedAt, MIN_LOGIN_LOADER_MS);
+      setError('Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -140,9 +186,10 @@ const Login = () => {
         <div>
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Sign in
+            {isSubmitting ? <Loader label="Signing in..." /> : 'Sign in'}
           </button>
         </div>
       </form>
@@ -182,8 +229,6 @@ const Login = () => {
           </div>
         </div>
       </div>
-
-
     </div>
   );
 };

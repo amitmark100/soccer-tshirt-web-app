@@ -9,6 +9,72 @@ interface JWTPayload {
   };
 }
 
+const ACCESS_TOKEN_COOKIE = 'accessToken';
+const REFRESH_TOKEN_COOKIE = 'refreshToken';
+const AUTH_USER_COOKIE = 'authUser';
+const ACCESS_TOKEN_MAX_AGE_MS = 1000 * 60 * 60;
+const REFRESH_TOKEN_MAX_AGE_MS = 1000 * 60 * 60 * 24 * 7;
+
+const getCookieOptions = (maxAge: number, httpOnly = true) => ({
+  httpOnly,
+  sameSite: 'lax' as const,
+  secure: process.env.USE_HTTPS === 'true',
+  maxAge,
+  path: '/',
+});
+
+const setAuthCookies = (
+  res: Response,
+  accessToken: string,
+  refreshToken: string,
+  user: {
+    id: string;
+    username: string;
+    email: string;
+    profilePicture?: string | null;
+  }
+) => {
+  res.cookie(
+    ACCESS_TOKEN_COOKIE,
+    accessToken,
+    getCookieOptions(ACCESS_TOKEN_MAX_AGE_MS)
+  );
+  res.cookie(
+    REFRESH_TOKEN_COOKIE,
+    refreshToken,
+    getCookieOptions(REFRESH_TOKEN_MAX_AGE_MS)
+  );
+  res.cookie(
+    AUTH_USER_COOKIE,
+    JSON.stringify(user),
+    getCookieOptions(REFRESH_TOKEN_MAX_AGE_MS, false)
+  );
+};
+
+const clearAuthCookies = (res: Response) => {
+  res.clearCookie(ACCESS_TOKEN_COOKIE, getCookieOptions(ACCESS_TOKEN_MAX_AGE_MS));
+  res.clearCookie(REFRESH_TOKEN_COOKIE, getCookieOptions(REFRESH_TOKEN_MAX_AGE_MS));
+  res.clearCookie(AUTH_USER_COOKIE, getCookieOptions(REFRESH_TOKEN_MAX_AGE_MS, false));
+};
+
+const getCookieValue = (req: Request, cookieName: string) => {
+  const rawCookies = req.headers.cookie;
+
+  if (!rawCookies) {
+    return null;
+  }
+
+  for (const cookie of rawCookies.split(';')) {
+    const [name, ...valueParts] = cookie.trim().split('=');
+
+    if (name === cookieName) {
+      return decodeURIComponent(valueParts.join('='));
+    }
+  }
+
+  return null;
+};
+
 /**
  * @desc    Register user
  * @access  Public
@@ -65,14 +131,17 @@ export const register = async (req: Request, res: Response): Promise<void> => {
     user.refreshTokens.push(refreshToken);
     await user.save();
 
+    const responseUser = {
+      id: user._id.toString(),
+      username: user.username,
+      email: user.email,
+    };
+
+    setAuthCookies(res, accessToken, refreshToken, responseUser);
+
     res.status(201).json({
-      token: accessToken,
-      refreshToken: refreshToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      user: responseUser,
+      msg: 'User registered successfully',
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
@@ -135,14 +204,17 @@ export const login = async (req: Request, res: Response): Promise<void> => {
     user.refreshTokens.push(refreshToken);
     await user.save();
 
+    const responseUser = {
+      id: user._id.toString(),
+      username: user.username,
+      email: user.email,
+    };
+
+    setAuthCookies(res, accessToken, refreshToken, responseUser);
+
     res.json({
-      token: accessToken,
-      refreshToken: refreshToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-      },
+      user: responseUser,
+      msg: 'Login successful',
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
@@ -217,7 +289,8 @@ export const updateUserProfile = async (req: Request, res: Response): Promise<vo
  *          and returns a new access token if valid
  */
 export const refreshToken = async (req: Request, res: Response): Promise<void> => {
-  const { refreshToken: providedRefreshToken } = req.body;
+  const providedRefreshToken =
+    getCookieValue(req, REFRESH_TOKEN_COOKIE) || req.body.refreshToken;
 
   // Basic validation
   if (!providedRefreshToken) {
@@ -262,9 +335,14 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
       expiresIn: '1h',
     });
 
+    res.cookie(
+      ACCESS_TOKEN_COOKIE,
+      newAccessToken,
+      getCookieOptions(ACCESS_TOKEN_MAX_AGE_MS)
+    );
+
     res.json({
-      token: newAccessToken,
-      refreshToken: providedRefreshToken,
+      msg: 'Access token refreshed successfully',
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : 'Server error';
@@ -279,7 +357,8 @@ export const refreshToken = async (req: Request, res: Response): Promise<void> =
  * @details Removes the current refresh token from user's refreshTokens[] array
  */
 export const logout = async (req: Request, res: Response): Promise<void> => {
-  const { refreshToken: providedRefreshToken } = req.body;
+  const providedRefreshToken =
+    getCookieValue(req, REFRESH_TOKEN_COOKIE) || req.body.refreshToken;
 
   try {
     const userId = req.user!._id;
@@ -296,6 +375,8 @@ export const logout = async (req: Request, res: Response): Promise<void> => {
       user.refreshTokens = user.refreshTokens.filter(token => token !== providedRefreshToken);
       await user.save();
     }
+
+    clearAuthCookies(res);
 
     res.json({ msg: 'User logged out successfully' });
   } catch (error) {
@@ -458,15 +539,18 @@ export const googleLogin = async (req: Request, res: Response): Promise<void> =>
     console.log('[Google Login] JWT tokens generated successfully');
     console.log('[Google Login] Step 7: Sending response');
 
+    const responseUser = {
+      id: user._id.toString(),
+      username: user.username,
+      email: user.email,
+      profilePicture: user.profilePicture,
+    };
+
+    setAuthCookies(res, accessToken, refreshToken, responseUser);
+
     res.json({
-      token: accessToken,
-      refreshToken: refreshToken,
-      user: {
-        id: user._id,
-        username: user.username,
-        email: user.email,
-        profilePicture: user.profilePicture,
-      },
+      user: responseUser,
+      msg: 'Google login successful',
     });
 
     console.log('[Google Login] Response sent successfully');

@@ -33,6 +33,24 @@ interface JWTPayload {
   exp?: number;
 }
 
+const ACCESS_TOKEN_COOKIE = 'accessToken';
+
+const getCookieValue = (cookieHeader: string | undefined, cookieName: string) => {
+  if (!cookieHeader) {
+    return null;
+  }
+
+  for (const cookie of cookieHeader.split(';')) {
+    const [name, ...valueParts] = cookie.trim().split('=');
+
+    if (name === cookieName) {
+      return decodeURIComponent(valueParts.join('='));
+    }
+  }
+
+  return null;
+};
+
 /**
  * Authentication Middleware
  * Verifies JWT token and attaches user sub-schema to req.user
@@ -47,14 +65,18 @@ export const authMiddleware = async (
   next: NextFunction
 ): Promise<void> => {
   try {
-    // Get token from Authorization header
     const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    const tokenFromHeader =
+      authHeader && authHeader.startsWith('Bearer ')
+        ? authHeader.substring(7)
+        : null;
+    const tokenFromCookie = getCookieValue(req.headers.cookie, ACCESS_TOKEN_COOKIE);
+    const token = tokenFromHeader || tokenFromCookie;
+
+    if (!token) {
       res.status(401).json({ error: 'No token provided. Authorization required.' });
       return;
     }
-
-    const token = authHeader.substring(7); // Remove "Bearer " prefix
 
     // Verify token
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JWTPayload;

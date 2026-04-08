@@ -1,4 +1,6 @@
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { clearAuthCookies } from '../../utils/authCookies';
 
 const HomeIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -36,9 +38,36 @@ const LogoutIcon = () => (
   </svg>
 );
 
+const LOGOUT_URL = 'http://localhost:5000/api/auth/logout';
+
 const LeftSidebar = () => {
+  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const navClassName = ({ isActive }: { isActive: boolean }): string =>
     `feed-nav-item${isActive ? ' active' : ''}`;
+
+  const handleLogout = async () => {
+    if (isLoggingOut) {
+      return;
+    }
+
+    try {
+      setIsLoggingOut(true);
+
+      await fetch(LOGOUT_URL, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+    } finally {
+      clearAuthCookies();
+      navigate('/auth', { replace: true });
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <aside className="feed-left-sidebar">
@@ -71,9 +100,14 @@ const LeftSidebar = () => {
         </section>
       </div>
 
-      <NavLink to="/auth" className="feed-nav-item feed-logout">
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={isLoggingOut}
+        className="feed-nav-item feed-logout"
+      >
         <LogoutIcon /> Log Out
-      </NavLink>
+      </button>
     </aside>
   );
 };
