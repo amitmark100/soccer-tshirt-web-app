@@ -1,6 +1,13 @@
 const AUTH_USER_COOKIE = 'authUser';
 const AUTH_CHANGE_EVENT = 'authchange';
 
+export interface AuthUser {
+  id: string;
+  username: string;
+  email: string;
+  profilePicture?: string | null;
+}
+
 export const getCookie = (name: string) => {
   const cookieEntry = document.cookie
     .split('; ')
@@ -15,6 +22,20 @@ export const getCookie = (name: string) => {
 
 export const hasAuthCookies = () => {
   return Boolean(getCookie(AUTH_USER_COOKIE));
+};
+
+export const getAuthUser = (): AuthUser | null => {
+  const rawUser = getCookie(AUTH_USER_COOKIE);
+
+  if (!rawUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(rawUser) as AuthUser;
+  } catch {
+    return null;
+  }
 };
 
 export const broadcastAuthChange = () => {

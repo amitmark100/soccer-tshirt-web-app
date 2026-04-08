@@ -14,8 +14,13 @@ export interface Post {
   isVerified?: boolean;
   timestamp: string;
   designImage: string;
+  imagePath?: string;
   title: string;
   description: string;
+  team?: string;
+  league?: string;
+  price?: number;
+  size?: string;
   likes: number;
   isLiked: boolean;
   comments: Comment[];

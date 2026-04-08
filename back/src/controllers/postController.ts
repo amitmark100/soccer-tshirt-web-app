@@ -59,6 +59,18 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
+    if (!req.file) {
+      res.status(400).json({ error: 'image file is required' });
+      return;
+    }
+
+    if (typeof jerseyDetails.price === 'string') {
+      jerseyDetails.price = Number(jerseyDetails.price);
+    }
+
+    const uploadedImagePath = `/uploads/${req.file.filename}`;
+    jerseyDetails.imageUrl = uploadedImagePath;
+
     // Validation: jerseyDetails structure
     const jerseyValidation = validateJerseyDetails(jerseyDetails);
     if (!jerseyValidation.valid) {
@@ -66,14 +78,11 @@ export const createPost = async (req: Request, res: Response): Promise<void> => 
       return;
     }
 
-    // Get image path from uploaded file (if exists)
-    const image = req.file ? `/uploads/${req.file.filename}` : null;
-
     // Create post with user info from authenticated request
     const post = await Post.create({
       user: req.user, // Automatically attach authenticated user's sub-schema
       text,
-      image,
+      image: uploadedImagePath,
       jerseyDetails,
       likes: [],
       commentsCount: 0,

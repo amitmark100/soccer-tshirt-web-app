@@ -12,7 +12,19 @@ const FeedPage = () => {
   const [searchValue, setSearchValue] = useState<string>('');
   const [selectedPost, setSelectedPost] = useState<PostType | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const { posts, visiblePosts, hasMore, toggleLike, addComment, editPost, deletePost, currentUserId, loadMore } = useFeed();
+  const {
+    posts,
+    visiblePosts,
+    hasMore,
+    isLoading,
+    errorMessage,
+    toggleLike,
+    addComment,
+    editPost,
+    deletePost,
+    currentUserId,
+    loadMore
+  } = useFeed();
 
   useEffect(() => {
     if (!loadMoreRef.current || !hasMore) {
@@ -62,6 +74,9 @@ const FeedPage = () => {
         </header>
 
         <section className="feed-posts" aria-label="Design feed">
+          {isLoading ? <p className="feed-end">Loading designs...</p> : null}
+          {errorMessage ? <p className="feed-end">{errorMessage}</p> : null}
+
           {filteredPosts.map((post) => (
             <Post
               key={post.id}
@@ -75,13 +90,13 @@ const FeedPage = () => {
             />
           ))}
 
-          {hasMore ? (
+          {!isLoading && !errorMessage && hasMore ? (
             <div ref={loadMoreRef} className="feed-load-more" aria-hidden="true">
               Loading more designs...
             </div>
-          ) : (
+          ) : !isLoading && !errorMessage ? (
             <p className="feed-end">You are all caught up.</p>
-          )}
+          ) : null}
         </section>
       </main>
 

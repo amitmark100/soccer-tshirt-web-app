@@ -47,7 +47,8 @@
 }
 
 .create-form-field input,
-.create-form-field textarea {
+.create-form-field textarea,
+.create-form-field select {
   width: 100%;
   border: 1px solid #dbe2ee;
   border-radius: 12px;
@@ -58,9 +59,16 @@
 }
 
 .create-form-field input:focus,
-.create-form-field textarea:focus {
+.create-form-field textarea:focus,
+.create-form-field select:focus {
   outline: none;
   border-color: #93a4c0;
+}
+
+.create-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
 }
 
 .create-form-preview {
@@ -82,6 +90,24 @@
   max-height: 320px;
   border-radius: 10px;
   object-fit: cover;
+}
+
+.create-form-preview-empty {
+  min-height: 220px;
+  display: grid;
+  place-items: center;
+  border: 1px dashed #c7d2e4;
+  border-radius: 10px;
+  color: #6b7280;
+  background: #f8fafc;
+  text-align: center;
+  padding: 18px;
+}
+
+.create-form-error {
+  margin: 0;
+  color: #dc2626;
+  font-size: 0.95rem;
 }
 
 .create-post-actions {
@@ -110,6 +136,11 @@
   color: #fff;
 }
 
+.create-submit-btn:disabled {
+  opacity: 0.8;
+  cursor: wait;
+}
+
 @media (max-width: 900px) {
   .create-page-layout {
     grid-template-columns: 1fr;
@@ -118,5 +149,9 @@
 
   .create-post-panel {
     padding: 16px;
+  }
+
+  .create-form-grid {
+    grid-template-columns: 1fr;
   }
 }

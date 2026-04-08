@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useAPI } from '../../hooks/useAPI';
 import { clearAuthCookies } from '../../utils/authCookies';
 
 const HomeIcon = () => (
@@ -38,9 +39,8 @@ const LogoutIcon = () => (
   </svg>
 );
 
-const LOGOUT_URL = 'http://localhost:5000/api/auth/logout';
-
 const LeftSidebar = () => {
+  const API = useAPI();
   const navigate = useNavigate();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -55,13 +55,7 @@ const LeftSidebar = () => {
     try {
       setIsLoggingOut(true);
 
-      await fetch(LOGOUT_URL, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      await API.auth.logout();
     } finally {
       clearAuthCookies();
       navigate('/auth', { replace: true });

@@ -1,8 +1,8 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Loader from './Loader/Loader';
+import { useAPI } from '../hooks/useAPI';
 
-const REGISTER_URL = 'http://localhost:5000/api/auth/register';
 const MIN_SIGNUP_LOADER_MS = 3000;
 
 const waitForMinimumTime = async (startedAt: number, minimumMs: number) => {
@@ -14,6 +14,7 @@ const waitForMinimumTime = async (startedAt: number, minimumMs: number) => {
 };
 
 const SignUp = () => {
+  const API = useAPI();
   const navigate = useNavigate();
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
@@ -41,26 +42,13 @@ const SignUp = () => {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(REGISTER_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username: username.trim(),
-          email: email.trim(),
-          password,
-        }),
+      await API.auth.register({
+        username: username.trim(),
+        email: email.trim(),
+        password,
       });
 
       await waitForMinimumTime(startedAt, MIN_SIGNUP_LOADER_MS);
-
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        setError(data?.msg || 'Sign up failed');
-        return;
-      }
 
       navigate('/auth', {
         replace: true,
@@ -69,9 +57,9 @@ const SignUp = () => {
           authMessage: 'Sign up successful. Please log in.',
         },
       });
-    } catch {
+    } catch (error) {
       await waitForMinimumTime(startedAt, MIN_SIGNUP_LOADER_MS);
-      setError('Unable to reach the server. Please try again.');
+      setError(error instanceof Error ? error.message : 'Unable to reach the server. Please try again.');
     } finally {
       setIsSubmitting(false);
     }

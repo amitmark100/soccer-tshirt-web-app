@@ -1,9 +1,9 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import Loader from './Loader/Loader';
+import { useAPI } from '../hooks/useAPI';
 import { broadcastAuthChange } from '../utils/authCookies';
 
-const LOGIN_URL = 'http://localhost:5000/api/auth/login';
 const MIN_LOGIN_LOADER_MS = 3000;
 
 const waitForMinimumTime = async (startedAt: number, minimumMs: number) => {
@@ -15,6 +15,7 @@ const waitForMinimumTime = async (startedAt: number, minimumMs: number) => {
 };
 
 const Login = () => {
+  const API = useAPI();
   const location = useLocation();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
@@ -47,32 +48,18 @@ const Login = () => {
     try {
       setIsSubmitting(true);
 
-      const response = await fetch(LOGIN_URL, {
-        method: 'POST',
-        credentials: 'include',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: email.trim(),
-          password,
-        }),
+      await API.auth.login({
+        email: email.trim(),
+        password,
       });
 
       await waitForMinimumTime(startedAt, MIN_LOGIN_LOADER_MS);
 
-      const data = await response.json().catch(() => null);
-
-      if (!response.ok) {
-        setError(data?.msg || 'Login failed');
-        return;
-      }
-
       broadcastAuthChange();
       navigate('/feed', { replace: true });
-    } catch {
+    } catch (error) {
       await waitForMinimumTime(startedAt, MIN_LOGIN_LOADER_MS);
-      setError('Unable to reach the server. Please try again.');
+      setError(error instanceof Error ? error.message : 'Unable to reach the server. Please try again.');
     } finally {
       setIsSubmitting(false);
     }
