@@ -21,12 +21,12 @@
 # Creates a new user with username, email, and password
 # Response includes JWT token and user data (_id, username, email)
 # This token is required for all protected endpoints below
-POST https://localhost:5000/api/auth/register
+POST http://localhost:5000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "soccerfan180",
-  "email": "soccerfan180@example.com",
+  "username": "soccerfan1810",
+  "email": "soccerfan1810@example.com",
   "password": "SecurePass123"
 }
 
@@ -40,8 +40,8 @@ POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "amitmark100@gmail.com",
-  "password": "Amitmark100!"
+  "email": "soccerfan1810@example.com",
+  "password": "SecurePass123"
 }
 
 ###
@@ -405,13 +405,72 @@ Content-Type: image/jpeg
 # - Use timestamps for efficient queries and sorting
 
 ###
-### AI Search for posts
-# Uses natural language query to filter posts with AI-generated MongoDB filter
+### AI SEARCH ENDPOINTS
+###
+
+### AI Search: Find Premier League jerseys
+# Uses Grok AI to understand natural language search query
+# Extracts search terms (team, color, year, player) and returns relevant posts
+# Returns: { posts: [...], aiReasoning: "explanation" }
 # IMPORTANT: Replace YOUR_JWT_TOKEN_HERE with a valid JWT token from login response
+POST http://localhost:5000/api/post/ai-search
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjllMjA0MWIwYWFmYWRkNWJmZWU4NjVhIn0sImlhdCI6MTc3NjQyMDI5NywiZXhwIjoxNzc2NDIzODk3fQ.sBKHdWZUadlty6e2dsHY2UNEDZOJveZk9IpGoYMHmTw
+
+{
+  "query": "I'm looking for a barcelona under 350$"
+}
+
+###
+
+### AI Search: Find jerseys for specific player
+# Searches for jerseys mentioning a specific player name
+# The AI extracts player name and matches against post descriptions
+POST http://localhost:5000/api/post/ai-search
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MzMzMzYyOCwiZXhwIjoxNzczMzM3MjI4fQ.AcvwrLfph8kJJbo66kkGMwlR0zSZCpV373Y88DWhrVs
+
+{
+  "query": "Show me vintage Chelsea jerseys with player names on the back, any size available"
+}
+
+###
+
+### AI Search: Find budget-friendly vintage jerseys
+# Searches for older/vintage jerseys with good prices
+# The AI extracts year preference and price range from natural language
 POST https://localhost:5000/api/post/ai-search
 Content-Type: application/json
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MzMzMzYyOCwiZXhwIjoxNzczMzM3MjI4fQ.AcvwrLfph8kJJbo66kkGMwlR0zSZCpV373Y88DWhrVs
 
 {
-  "query": "Premier League jersey for medium size under 250 NIS"
+  "query": "I want to find Real Madrid jerseys from the early 2000s in large size, preferably under 150 NIS"
 }
+
+###
+
+### AI Search: Find blue and white colored jerseys
+# Searches for jerseys with specific colors mentioned in descriptions
+# Useful for finding jerseys by team colors rather than exact team name
+POST https://localhost:5000/api/post/ai-search
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MzMzMzYyOCwiZXhwIjoxNzczMzM3MjI4fQ.AcvwrLfph8kJJbo66kkGMwlR0zSZCpV373Y88DWhrVs
+
+{
+  "query": "Looking for a blue and white striped jersey, medium or large size, La Liga preferred"
+}
+
+###
+
+### AI Search: Find La Liga team jerseys
+# Searches for specific league (La Liga in this case)
+# The AI extracts league preference and builds appropriate search filter
+POST https://localhost:5000/api/post/ai-search
+Content-Type: application/json
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjp7ImlkIjoiNjlhMTRmNTk5NDRjNThhMDYxOTI0Y2I1In0sImlhdCI6MTc3MzMzMzYyOCwiZXhwIjoxNzczMzM3MjI4fQ.AcvwrLfph8kJJbo66kkGMwlR0zSZCpV373Y88DWhrVs
+
+{
+  "query": "Show me any La Liga team jerseys available right now, preferably larger sizes"
+}
+
+###

@@ -1,43 +1,87 @@
-const apiKey: string = process.env.GOOGLE_API_KEY || '';
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.1-flash-lite-preview:generateContent?key=${apiKey}`;
+import axios from 'axios';
 
-export async function generateFilterFromQuery(query: string): Promise<any> {
-    try {
-        console.log("AI Search triggered");
-        
-        const requestBody = {
-            contents: [{
-                parts: [{ 
-                    text: "SYSTEM: You are a MongoDB filter generator for a soccer jersey store. Map user queries to JSON filters for Post.find(). Fields: jerseyDetails.team, jerseyDetails.league, jerseyDetails.size, jerseyDetails.price. For sizes, convert to single letters: S, M, L, XL, XXL. If the user says 'Medium', convert it to 'M'. If they say 'Large', convert it to 'L'. Return ONLY the JSON object. USER QUERY: " + query
-                }]
-            }]
-        };
+const GROQ_API_KEY = process.env.GROQ_API_KEY || '';
+const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
-        const response = await fetch(GEMINI_API_URL, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(requestBody)
-        });
+interface GrokSearchTerms {
+  team?: string;
+  color?: string;
+  year?: string;
+  player?: string;
+  reasoning: string;
+}
 
-        if (!response.ok) {
-            const errorBody = await response.text();
-            console.error(`HTTP error! status: ${response.status}`, errorBody);
-            throw new Error(`Gemini API error: ${response.status} - ${errorBody}`);
-        }
-
-        const data = (await response.json()) as any;
-
-        // Extract the text from the response
-        const responseText = data.candidates[0].content.parts[0].text;
-        const filter = JSON.parse(responseText);
-        
-        console.log("Final Filter object:", filter);
-
-        return filter;
-    } catch (error: any) {
-        console.error("Error from Gemini API:", error.message);
-        throw error;
+export async function generateFilterFromQuery(query: string): Promise<GrokSearchTerms> {
+  try {
+    if (!GROQ_API_KEY) {
+      throw new Error('GROQ_API_KEY environment variable is not set');
     }
+
+    const systemPrompt = `You are a soccer jersey expert. Analyze the user's search query.
+    Return ONLY a valid JSON object. No markdown, no backticks, no explanation.
+    Format: {"team": "string or null", "color": "string or null", "year": "string or null", "player": "string or null", "reasoning": "one sentence in English"}`;
+
+    const response = await axios.post(
+      GROQ_API_URL,
+      {
+        model: 'llama-3.3-70b-versatile',
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: query,
+          },
+        ],
+        temperature: 0,
+        response_format: { type: "json_object" }
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${GROQ_API_KEY.trim()}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    const responseText = response.data.choices[0].message.content;
+    return JSON.parse(responseText);
+
+  } catch (error: any) {
+    if (error.response && error.response.data) {
+      console.error('[AI Search] Groq Detailed Error:', JSON.stringify(error.response.data, null, 2));
+    }
+    const errorMessage = error.response?.data?.error?.message || error.message || 'Unknown error';
+    throw new Error(errorMessage);
+  }
+}
+
+export function buildMongooseFilter(searchTerms: GrokSearchTerms): Record<string, any> {
+  const filter: Record<string, any> = {};
+
+  if (searchTerms.team) {
+    filter['jerseyDetails.team'] = { $regex: searchTerms.team, $options: 'i' };
+  }
+
+  const searchField = 'description';
+
+  if (searchTerms.color) {
+    filter[searchField] = { $regex: searchTerms.color, $options: 'i' };
+  }
+
+  if (searchTerms.year) {
+    filter[searchField] = filter[searchField]
+      ? { ...filter[searchField], $regex: searchTerms.year, $options: 'i' }
+      : { $regex: searchTerms.year, $options: 'i' };
+  }
+
+  if (searchTerms.player) {
+    filter[searchField] = filter[searchField]
+      ? { ...filter[searchField], $regex: searchTerms.player, $options: 'i' }
+      : { $regex: searchTerms.player, $options: 'i' };
+  }
+
+  return filter;
 }
