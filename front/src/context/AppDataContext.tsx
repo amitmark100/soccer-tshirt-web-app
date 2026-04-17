@@ -2,6 +2,7 @@ import { createContext, ReactNode, useCallback, useContext, useMemo, useState } 
 
 import { Post } from '../types/types';
 import { posts as initialPosts, profileUser } from '../utils/mockData';
+import { getAuthUser } from '../utils/authCookies';
 
 interface CreatePostInput {
   title: string;
@@ -19,6 +20,7 @@ interface AppDataContextValue {
   currentUserId: string;
   posts: Post[];
   createPost: (input: CreatePostInput) => void;
+  prependPost: (post: Post) => void;
   toggleLike: (postId: string) => void;
   addComment: (postId: string, commentText: string) => void;
   editPost: (postId: string, input: EditPostInput) => void;
@@ -33,6 +35,7 @@ interface AppDataProviderProps {
 
 export const AppDataProvider = ({ children }: AppDataProviderProps) => {
   const [posts, setPosts] = useState<Post[]>(initialPosts);
+  const authUser = getAuthUser();
 
   const toggleLike = useCallback((postId: string) => {
     setPosts((currentPosts) => {
@@ -110,6 +113,10 @@ export const AppDataProvider = ({ children }: AppDataProviderProps) => {
     setPosts((currentPosts) => [newPost, ...currentPosts]);
   }, []);
 
+  const prependPost = useCallback((post: Post) => {
+    setPosts((currentPosts) => [post, ...currentPosts]);
+  }, []);
+
   const editPost = useCallback((postId: string, input: EditPostInput) => {
     const trimmedTitle = input.title.trim();
     const trimmedDescription = input.description.trim();
@@ -141,15 +148,16 @@ export const AppDataProvider = ({ children }: AppDataProviderProps) => {
 
   const contextValue = useMemo<AppDataContextValue>(
     () => ({
-      currentUserId: profileUser.id,
+      currentUserId: authUser?.id || profileUser.id,
       posts,
       createPost,
+      prependPost,
       toggleLike,
       addComment,
       editPost,
       deletePost
     }),
-    [posts, createPost, toggleLike, addComment, editPost, deletePost]
+    [authUser?.id, posts, createPost, prependPost, toggleLike, addComment, editPost, deletePost]
   );
 
   return <AppDataContext.Provider value={contextValue}>{children}</AppDataContext.Provider>;

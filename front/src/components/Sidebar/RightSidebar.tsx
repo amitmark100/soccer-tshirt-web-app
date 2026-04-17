@@ -2,8 +2,7 @@ import { useMemo } from 'react';
 
 import SuggestedUsers from '../Suggestions/SuggestedUsers';
 import TrendingDesigns from '../Suggestions/TrendingDesigns';
-import { Post, TopRatedUser } from '../../types/types';
-import { trendingDesigns } from '../../utils/mockData';
+import { Post, TopRatedUser, TrendingDesign } from '../../types/types';
 
 interface RightSidebarProps {
   posts: Post[];
@@ -30,6 +29,19 @@ const RightSidebar = ({ posts }: RightSidebarProps) => {
     });
 
     return [...usersById.values()].sort((a, b) => b.totalLikes - a.totalLikes).slice(0, 3);
+  }, [posts]);
+
+  const trendingDesigns = useMemo<TrendingDesign[]>(() => {
+    return [...posts]
+      .sort((a, b) => b.likes + b.totalComments - (a.likes + a.totalComments))
+      .slice(0, 4)
+      .map((post) => ({
+        id: post.id,
+        name: post.title,
+        image: post.designImage,
+        likes: post.likes,
+        comments: post.totalComments,
+      }));
   }, [posts]);
 
   return (

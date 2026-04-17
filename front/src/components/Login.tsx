@@ -1,21 +1,67 @@
-import { ChangeEvent, FormEvent, useState } from 'react';
-import { User } from '../types/user';
+import { ChangeEvent, FormEvent, useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import Loader from './Loader/Loader';
+import { useAPI } from '../hooks/useAPI';
+import { broadcastAuthChange } from '../utils/authCookies';
+
+const MIN_LOGIN_LOADER_MS = 3000;
+
+const waitForMinimumTime = async (startedAt: number, minimumMs: number) => {
+  const elapsed = Date.now() - startedAt;
+
+  if (elapsed < minimumMs) {
+    await new Promise(resolve => setTimeout(resolve, minimumMs - elapsed));
+  }
+};
 
 const Login = () => {
+  const API = useAPI();
+  const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [message, setMessage] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  useEffect(() => {
+    const authMessage = location.state?.authMessage;
+    if (authMessage) {
+      setMessage(authMessage);
+      navigate(location.pathname, { replace: true, state: null });
+    }
+  }, [location.pathname, location.state, navigate]);
+
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    const usersData = localStorage.getItem('users');
-    const users: User[] = usersData ? JSON.parse(usersData) : [];
-    const user = users.find(user => user.email === email && user.password === password);
-    if (user) {
-      alert('Login successful!');
-    } else {
-      setError('Invalid email or password');
+    setError('');
+    setMessage('');
+
+    if (!email.trim() || !password.trim()) {
+      setError('Please enter all fields');
+      return;
+    }
+
+    const startedAt = Date.now();
+
+    try {
+      setIsSubmitting(true);
+
+      await API.auth.login({
+        email: email.trim(),
+        password,
+      });
+
+      await waitForMinimumTime(startedAt, MIN_LOGIN_LOADER_MS);
+
+      broadcastAuthChange();
+      navigate('/feed', { replace: true });
+    } catch (error) {
+      await waitForMinimumTime(startedAt, MIN_LOGIN_LOADER_MS);
+      setError(error instanceof Error ? error.message : 'Unable to reach the server. Please try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -112,6 +158,12 @@ const Login = () => {
           </div>
         </div>
 
+        {message && (
+          <div>
+            <p className="text-sm text-green-600">{message}</p>
+          </div>
+        )}
+
         {error && (
           <div>
             <p className="text-sm text-red-600">{error}</p>
@@ -121,9 +173,10 @@ const Login = () => {
         <div>
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
           >
-            Sign in
+            {isSubmitting ? <Loader label="Signing in..." /> : 'Sign in'}
           </button>
         </div>
       </form>
@@ -163,8 +216,6 @@ const Login = () => {
           </div>
         </div>
       </div>
-
-
     </div>
   );
 };

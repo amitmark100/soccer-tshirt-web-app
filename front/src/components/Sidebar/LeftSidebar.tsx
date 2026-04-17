@@ -1,14 +1,11 @@
-import { NavLink } from 'react-router-dom';
+import { useState } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { useAPI } from '../../hooks/useAPI';
+import { clearAuthCookies } from '../../utils/authCookies';
 
 const HomeIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
     <path d="M3 10.5L12 3l9 7.5V21h-6v-6H9v6H3z" />
-  </svg>
-);
-
-const ExploreIcon = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-    <path d="M21 3l-7.5 17-3-7-7-3L21 3zm-10 10l2 2 4-9-9 4 3 1z" />
   </svg>
 );
 
@@ -37,8 +34,28 @@ const LogoutIcon = () => (
 );
 
 const LeftSidebar = () => {
+  const API = useAPI();
+  const navigate = useNavigate();
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
   const navClassName = ({ isActive }: { isActive: boolean }): string =>
     `feed-nav-item${isActive ? ' active' : ''}`;
+
+  const handleLogout = async () => {
+    if (isLoggingOut) {
+      return;
+    }
+
+    try {
+      setIsLoggingOut(true);
+
+      await API.auth.logout();
+    } finally {
+      clearAuthCookies();
+      navigate('/auth', { replace: true });
+      setIsLoggingOut(false);
+    }
+  };
 
   return (
     <aside className="feed-left-sidebar">
@@ -49,9 +66,6 @@ const LeftSidebar = () => {
           <NavLink to="/feed" end className={navClassName}>
             <HomeIcon /> Home
           </NavLink>
-          <a href="#" className="feed-nav-item">
-            <ExploreIcon /> Explore
-          </a>
           <NavLink to="/create" className={navClassName}>
             <CreateIcon /> Create
           </NavLink>
@@ -71,9 +85,14 @@ const LeftSidebar = () => {
         </section>
       </div>
 
-      <NavLink to="/auth" className="feed-nav-item feed-logout">
+      <button
+        type="button"
+        onClick={handleLogout}
+        disabled={isLoggingOut}
+        className="feed-nav-item feed-logout"
+      >
         <LogoutIcon /> Log Out
-      </NavLink>
+      </button>
     </aside>
   );
 };

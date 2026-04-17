@@ -9,7 +9,10 @@ interface PostProps {
   onOpenPreview: (post: PostType) => void;
   onToggleLike: (postId: string) => void;
   onAddComment: (postId: string, commentText: string) => void;
-  onEditPost: (postId: string, input: { title: string; description: string; designImage: string }) => void;
+  onEditPost: (
+    postId: string,
+    input: { team: string; league: string; price: number; size: string; description: string }
+  ) => void;
   onDeletePost: (postId: string) => void;
 }
 
@@ -48,21 +51,31 @@ const formatCompactCount = (count: number): string => {
 
 const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, onEditPost, onDeletePost }: PostProps) => {
   const [isEditing, setIsEditing] = useState<boolean>(false);
-  const [title, setTitle] = useState<string>(post.title);
+  const [team, setTeam] = useState<string>(post.team || '');
+  const [league, setLeague] = useState<string>(post.league || '');
+  const [price, setPrice] = useState<string>(post.price ? String(post.price) : '');
+  const [size, setSize] = useState<string>(post.size || 'M');
   const [description, setDescription] = useState<string>(post.description);
-  const [designImage, setDesignImage] = useState<string>(post.designImage);
   const isPostOwner = post.userId === currentUserId;
 
   const handleEditSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    onEditPost(post.id, { title, description, designImage });
+    onEditPost(post.id, {
+      team,
+      league,
+      price: Number(price),
+      size,
+      description,
+    });
     setIsEditing(false);
   };
 
   const handleStartEdit = () => {
-    setTitle(post.title);
+    setTeam(post.team || '');
+    setLeague(post.league || '');
+    setPrice(post.price ? String(post.price) : '');
+    setSize(post.size || 'M');
     setDescription(post.description);
-    setDesignImage(post.designImage);
     setIsEditing(true);
   };
 
@@ -72,16 +85,37 @@ const Post = ({ post, currentUserId, onOpenPreview, onToggleLike, onAddComment, 
         <form className="feed-edit-post-form" onSubmit={handleEditSubmit}>
           <h3>Edit Post</h3>
           <label className="feed-form-field">
-            <span>Title</span>
-            <input value={title} onChange={(event) => setTitle(event.target.value)} required />
+            <span>Team</span>
+            <input value={team} onChange={(event) => setTeam(event.target.value)} required />
+          </label>
+          <label className="feed-form-field">
+            <span>League</span>
+            <input value={league} onChange={(event) => setLeague(event.target.value)} required />
+          </label>
+          <label className="feed-form-field">
+            <span>Price</span>
+            <input
+              type="number"
+              min="1"
+              step="0.01"
+              value={price}
+              onChange={(event) => setPrice(event.target.value)}
+              required
+            />
+          </label>
+          <label className="feed-form-field">
+            <span>Size</span>
+            <select value={size} onChange={(event) => setSize(event.target.value)}>
+              {['XS', 'S', 'M', 'L', 'XL', 'XXL'].map((sizeOption) => (
+                <option key={sizeOption} value={sizeOption}>
+                  {sizeOption}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="feed-form-field">
             <span>Description</span>
             <textarea value={description} onChange={(event) => setDescription(event.target.value)} rows={3} required />
-          </label>
-          <label className="feed-form-field">
-            <span>Image URL</span>
-            <input value={designImage} onChange={(event) => setDesignImage(event.target.value)} required />
           </label>
           <div className="feed-post-actions">
             <button type="button" className="feed-cancel-btn" onClick={() => setIsEditing(false)}>

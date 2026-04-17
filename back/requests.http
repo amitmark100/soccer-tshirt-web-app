@@ -25,8 +25,8 @@ POST https://localhost:5000/api/auth/register
 Content-Type: application/json
 
 {
-  "username": "soccerfan177",
-  "email": "soccerfan177@example.com",
+  "username": "soccerfan180",
+  "email": "soccerfan180@example.com",
   "password": "SecurePass123"
 }
 
@@ -36,12 +36,12 @@ Content-Type: application/json
 # Authenticates user and returns JWT token for protected requests
 # Copy the token from response and replace YOUR_JWT_TOKEN_HERE in requests below
 # Token expires in 1 hour
-POST https://localhost:5000/api/auth/login
+POST http://localhost:5000/api/auth/login
 Content-Type: application/json
 
 {
-  "email": "soccerfan@example.com",
-  "password": "SecurePass123"
+  "email": "amitmark100@gmail.com",
+  "password": "Amitmark100!"
 }
 
 ###
