@@ -1,7 +1,9 @@
 import { ChangeEvent, FormEvent, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
 import Loader from './Loader/Loader';
 import { useAPI } from '../hooks/useAPI';
+import { broadcastAuthChange } from '../utils/authCookies';
 
 const MIN_SIGNUP_LOADER_MS = 3000;
 
@@ -63,6 +65,31 @@ const SignUp = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credentialResponse: { credential: string }) => {
+    setError('');
+    const startedAt = Date.now();
+
+    try {
+      setIsSubmitting(true);
+
+      await API.auth.googleLogin(credentialResponse.credential);
+
+      await waitForMinimumTime(startedAt, MIN_SIGNUP_LOADER_MS);
+
+      broadcastAuthChange();
+      navigate('/feed', { replace: true });
+    } catch (error) {
+      await waitForMinimumTime(startedAt, MIN_SIGNUP_LOADER_MS);
+      setError(error instanceof Error ? error.message : 'Google sign-up failed. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleGoogleError = () => {
+    setError('Google sign-up failed. Please try again.');
   };
 
   return (
@@ -217,6 +244,27 @@ const SignUp = () => {
         </div>
       </form>
 
+      <div className="mt-6">
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t border-gray-300" />
+          </div>
+          <div className="relative flex justify-center text-sm">
+            <span className="px-2 bg-white text-gray-500">
+              Or sign up with
+            </span>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-center">
+          <GoogleLogin
+            onSuccess={handleGoogleSuccess}
+            onError={handleGoogleError}
+            text="signup"
+            size="large"
+          />
+        </div>
+      </div>
     </div>
   );
 };

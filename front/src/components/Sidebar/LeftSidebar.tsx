@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { googleLogout } from '@react-oauth/google';
 import { useAPI } from '../../hooks/useAPI';
 import { clearAuthCookies } from '../../utils/authCookies';
 
@@ -51,6 +52,8 @@ const LeftSidebar = () => {
 
       await API.auth.logout();
     } finally {
+      // Call googleLogout to clear Google session
+      googleLogout();
       clearAuthCookies();
       navigate('/auth', { replace: true });
       setIsLoggingOut(false);

@@ -170,6 +170,14 @@ export const useAPI = () => {
               body: JSON.stringify(payload),
             }
           ),
+        googleLogin: (credential: string) =>
+          request<{ msg: string; user: { id: string; username: string; email: string; profilePicture?: string } }>(
+            '/api/auth/google',
+            {
+              method: 'POST',
+              body: JSON.stringify({ credential }),
+            }
+          ),
         me: () => request<CurrentUserResponse>('/api/auth/me'),
         updateProfile: (userId: string, payload: { username: string; avatar?: File | null }) => {
           const formData = new FormData();
