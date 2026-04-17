@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 
 import { Post, Comment } from '../types/types';
 import { getAuthUser } from '../utils/authCookies';
+import { posts as mockPosts } from '../utils/mockData';
 
 const BACKEND_URL = 'http://localhost:5000';
 
@@ -83,6 +84,83 @@ const formatTimestamp = (value: string) => {
   }
 
   return postDate.toLocaleDateString();
+};
+
+const tokenizePrompt = (value: string) => {
+  return value
+    .toLowerCase()
+    .split(/[^a-z0-9]+/i)
+    .map((token) => token.trim())
+    .filter((token) => token.length > 2);
+};
+
+const scoreMockPost = (post: Post, promptTokens: string[]) => {
+  const searchableFields = [
+    post.title,
+    post.description,
+    post.username,
+    post.team || '',
+    post.league || '',
+  ];
+
+  const haystack = searchableFields.join(' ').toLowerCase();
+  let score = 0;
+  const matchedTerms: string[] = [];
+
+  for (const token of promptTokens) {
+    if (haystack.includes(token)) {
+      score += 1;
+      matchedTerms.push(token);
+    }
+  }
+
+  return {
+    score,
+    matchedTerms,
+  };
+};
+
+const runMockSmartSearch = async (
+  userPrompt: string
+): Promise<{ reasoning: string; posts: Post[] }> => {
+  const trimmedPrompt = userPrompt.trim();
+
+  if (!trimmedPrompt) {
+    return {
+      reasoning: 'No prompt was provided, so there are no relevant mock results to rank.',
+      posts: [],
+    };
+  }
+
+  const promptTokens = tokenizePrompt(trimmedPrompt);
+  const scoredPosts = mockPosts
+    .map((post) => {
+      const { score, matchedTerms } = scoreMockPost(post, promptTokens);
+
+      return {
+        post,
+        score,
+        matchedTerms,
+      };
+    })
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score || right.post.likes - left.post.likes);
+
+  const matchedPosts = scoredPosts.map((entry) => entry.post);
+  const topMatches = scoredPosts.slice(0, 3);
+  const matchedKeywords = Array.from(
+    new Set(topMatches.flatMap((entry) => entry.matchedTerms))
+  ).slice(0, 6);
+
+  const reasoning =
+    matchedPosts.length > 0
+      ? `Mock smart search matched ${matchedPosts.length} post${matchedPosts.length === 1 ? '' : 's'} for "${trimmedPrompt}" by checking each post title, description, and creator for relevant keywords. Top signals: ${matchedKeywords.join(', ')}. Results are ranked by keyword overlap first and likes second.`
+      : `Mock smart search found no relevant posts for "${trimmedPrompt}". It currently checks only local mock feed content using keyword overlap in the title, description, and creator fields.`;
+
+  return {
+    reasoning,
+    posts: matchedPosts,
+  };
 };
 
 const mapComment = (comment: BackendComment): Comment => ({
@@ -251,6 +329,8 @@ export const useAPI = () => {
           request<{ msg: string }>(`/api/post/${postId}`, {
             method: 'DELETE',
           }),
+        smartSearch: (userPrompt: string): Promise<{ reasoning: string; posts: Post[] }> =>
+          runMockSmartSearch(userPrompt),
         mapToFeedPost: mapBackendPostToFeedPost,
       },
       comment: {
