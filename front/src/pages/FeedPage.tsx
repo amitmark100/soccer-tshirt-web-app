@@ -21,6 +21,7 @@ const FeedPage = () => {
   const {
     posts,
     visiblePosts,
+    visibleLimit,
     hasMore,
     isLoading,
     errorMessage,
@@ -29,7 +30,8 @@ const FeedPage = () => {
     editPost,
     deletePost,
     currentUserId,
-    loadMore
+    loadMore,
+    resetVisibleCount
   } = useFeed();
 
   const smartSearchMutation = useMutation({
@@ -41,7 +43,9 @@ const FeedPage = () => {
   });
 
   useEffect(() => {
-    if (isSmartSearchEnabled || !loadMoreRef.current || !hasMore) {
+    const isStandardSearchActive = searchValue.trim().length > 0;
+
+    if (isSmartSearchEnabled || isStandardSearchActive || !loadMoreRef.current || !hasMore) {
       return;
     }
 
@@ -60,7 +64,7 @@ const FeedPage = () => {
     observer.observe(loadMoreRef.current);
 
     return () => observer.disconnect();
-  }, [hasMore, isSmartSearchEnabled, loadMore]);
+  }, [hasMore, isSmartSearchEnabled, loadMore, searchValue]);
 
   useEffect(() => {
     if (!isSmartSearchEnabled) {
@@ -70,12 +74,25 @@ const FeedPage = () => {
     }
   }, [isSmartSearchEnabled, smartSearchMutation]);
 
-  const filteredPosts = visiblePosts.filter((post) => {
+  useEffect(() => {
+    resetVisibleCount();
+  }, [searchValue, isSmartSearchEnabled, resetVisibleCount]);
+
+  const isStandardSearchActive = searchValue.trim().length > 0;
+
+  const filteredPosts = posts.filter((post) => {
     const searchableContent = `${post.title} ${post.description} ${post.username}`.toLowerCase();
     return searchableContent.includes(searchValue.toLowerCase());
   });
 
-  const displayedPosts = isSmartSearchEnabled ? smartSearchResults || [] : filteredPosts;
+  const standardDisplayedPosts = filteredPosts.slice(0, visibleLimit);
+  const hasMoreStandardSearchResults = filteredPosts.length > standardDisplayedPosts.length;
+
+  const displayedPosts = isSmartSearchEnabled
+    ? smartSearchResults || []
+    : isStandardSearchActive
+      ? standardDisplayedPosts
+      : visiblePosts;
   const shouldShowSmartSearchEmptyState =
     isSmartSearchEnabled &&
     !smartSearchMutation.isPending &&
@@ -83,7 +100,12 @@ const FeedPage = () => {
     smartSearchResults !== null &&
     displayedPosts.length === 0;
   const shouldShowStandardSearchEmptyState =
-    !isSmartSearchEnabled && !hasMore && displayedPosts.length === 0;
+    !isSmartSearchEnabled && isStandardSearchActive && displayedPosts.length === 0;
+  const shouldShowLoadMore =
+    !isLoading &&
+    !errorMessage &&
+    !isSmartSearchEnabled &&
+    (isStandardSearchActive ? hasMoreStandardSearchResults : hasMore);
 
   const handleSmartSearch = () => {
     const trimmedSearchValue = searchValue.trim();
@@ -187,7 +209,7 @@ const FeedPage = () => {
             />
           ))}
 
-          {!isLoading && !errorMessage && !isSmartSearchEnabled && hasMore ? (
+          {shouldShowLoadMore ? (
             <div ref={loadMoreRef} className="feed-load-more" aria-hidden="true">
               Loading more designs...
             </div>

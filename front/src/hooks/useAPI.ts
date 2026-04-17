@@ -5,6 +5,7 @@ import { getAuthUser } from '../utils/authCookies';
 import { posts as mockPosts } from '../utils/mockData';
 
 const BACKEND_URL = 'http://localhost:5000';
+const FEED_FETCH_LIMIT = 5000;
 
 interface BackendComment {
   _id: string;
@@ -269,7 +270,7 @@ export const useAPI = () => {
       post: {
         getFeedPosts: async (): Promise<Post[]> => {
           const [postsData, commentsData] = await Promise.all([
-            request<PostsResponse>('/api/post'),
+            request<PostsResponse>(`/api/post?limit=${FEED_FETCH_LIMIT}`),
             request<BackendComment[]>('/api/comments'),
           ]);
 
@@ -291,7 +292,9 @@ export const useAPI = () => {
           }),
         getUserPosts: async (userId: string): Promise<Post[]> => {
           const [postsData, commentsData] = await Promise.all([
-            request<PostsResponse>(`/api/post?userId=${encodeURIComponent(userId)}`),
+            request<PostsResponse>(
+              `/api/post?userId=${encodeURIComponent(userId)}&limit=${FEED_FETCH_LIMIT}`
+            ),
             request<BackendComment[]>('/api/comments'),
           ]);
 

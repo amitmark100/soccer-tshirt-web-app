@@ -8,6 +8,7 @@ import { getAuthUser } from '../utils/authCookies';
 interface UseFeedReturn {
   posts: Post[];
   visiblePosts: Post[];
+  visibleLimit: number;
   hasMore: boolean;
   isLoading: boolean;
   errorMessage: string;
@@ -20,6 +21,7 @@ interface UseFeedReturn {
   deletePost: (postId: string) => void;
   currentUserId: string;
   loadMore: () => void;
+  resetVisibleCount: () => void;
 }
 
 const PAGE_SIZE = 2;
@@ -82,6 +84,7 @@ export const useFeed = (): UseFeedReturn => {
   return {
     posts,
     visiblePosts,
+    visibleLimit: visiblePosts.length,
     hasMore,
     isLoading,
     errorMessage: error instanceof Error ? error.message : '',
@@ -117,5 +120,8 @@ export const useFeed = (): UseFeedReturn => {
     },
     currentUserId: authUser?.id || '',
     loadMore,
+    resetVisibleCount: () => {
+      setVisibleCount(PAGE_SIZE);
+    },
   };
 };
