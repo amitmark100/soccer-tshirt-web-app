@@ -141,6 +141,7 @@ export const trendingDesigns: TrendingDesign[] = [
 export const profileUser: User = {
   id: 'user-1',
   name: 'Alex Martinez',
+  email: 'alex.martinez@example.com',
   bio: 'Jersey designer & soccer enthusiast 🎨⚽',
   location: 'London, UK',
   joinDate: '2024-03-15',

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import SuggestedUsers from '../Suggestions/SuggestedUsers';
 import TrendingDesigns from '../Suggestions/TrendingDesigns';
 import { Post, TopRatedUser, TrendingDesign } from '../../types/types';
+import { sortPostsByTrendingScore } from '../../utils/trending';
 
 interface RightSidebarProps {
   posts: Post[];
@@ -32,8 +33,7 @@ const RightSidebar = ({ posts }: RightSidebarProps) => {
   }, [posts]);
 
   const trendingDesigns = useMemo<TrendingDesign[]>(() => {
-    return [...posts]
-      .sort((a, b) => b.likes + b.totalComments - (a.likes + a.totalComments))
+    return sortPostsByTrendingScore(posts)
       .slice(0, 4)
       .map((post) => ({
         id: post.id,
