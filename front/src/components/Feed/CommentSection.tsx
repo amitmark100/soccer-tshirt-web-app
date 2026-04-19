@@ -17,8 +17,10 @@ const CommentSection = ({
   onAddComment
 }: CommentSectionProps) => {
   const [commentValue, setCommentValue] = useState<string>('');
+  const [isShowingAllComments, setIsShowingAllComments] = useState<boolean>(false);
 
-  const visibleComments = comments.slice(-3);
+  const visibleComments = isShowingAllComments ? comments : comments.slice(-3);
+  const shouldShowExpandButton = comments.length > 3 && !isShowingAllComments;
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>): void => {
     event.preventDefault();
@@ -34,9 +36,15 @@ const CommentSection = ({
         ))}
       </div>
 
-      <button type="button" className="feed-link-button">
-        View all {totalComments} comments
-      </button>
+      {shouldShowExpandButton ? (
+        <button
+          type="button"
+          className="feed-link-button"
+          onClick={() => setIsShowingAllComments(true)}
+        >
+          View all {totalComments} comments
+        </button>
+      ) : null}
 
       <form className="feed-comment-form" onSubmit={handleSubmit}>
         <input
