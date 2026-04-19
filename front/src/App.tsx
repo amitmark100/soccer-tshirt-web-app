@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useLocation } from 'react-router-dom';
 
 import FeedPage from './pages/FeedPage';
 import AuthPage from './pages/AuthPage';
@@ -9,6 +9,7 @@ import { authChangeEventName, hasAuthCookies } from './utils/authCookies';
 
 const App = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(() => hasAuthCookies());
+  const location = useLocation();
 
   useEffect(() => {
     const syncAuthState = () => {
@@ -22,8 +23,12 @@ const App = () => {
     };
   }, []);
 
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [location.pathname]);
+
   return (
-    <Routes>
+    <Routes location={location} key={location.pathname}>
       <Route path="/" element={<Navigate to={isAuthenticated ? '/feed' : '/auth'} replace />} />
       <Route path="/auth" element={isAuthenticated ? <Navigate to="/feed" replace /> : <AuthPage />} />
       <Route path="/feed" element={isAuthenticated ? <FeedPage /> : <Navigate to="/auth" replace />} />

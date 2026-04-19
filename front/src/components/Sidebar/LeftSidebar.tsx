@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAPI } from '../../hooks/useAPI';
 import { clearAuthCookies } from '../../utils/authCookies';
 
@@ -21,12 +21,6 @@ const ProfileIcon = () => (
   </svg>
 );
 
-const FolderIcon = () => (
-  <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-    <path d="M3 6h6l2 2h10v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6z" />
-  </svg>
-);
-
 const LogoutIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
     <path d="M13 3h-2v8h2V3zm3.6 2.4l-1.4 1.4A7 7 0 1 1 8.8 6.8L7.4 5.4A9 9 0 1 0 16.6 5.4z" />
@@ -36,10 +30,19 @@ const LogoutIcon = () => (
 const LeftSidebar = () => {
   const API = useAPI();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
-  const navClassName = ({ isActive }: { isActive: boolean }): string =>
-    `feed-nav-item${isActive ? ' active' : ''}`;
+  const navClassName = (path: string): string =>
+    `feed-nav-item${location.pathname === path ? ' active' : ''}`;
+
+  const handleRouteChange = (path: string) => {
+    if (location.pathname === path) {
+      return;
+    }
+
+    window.location.assign(path);
+  };
 
   const handleLogout = async () => {
     if (isLoggingOut) {
@@ -63,26 +66,16 @@ const LeftSidebar = () => {
         <h1 className="feed-logo">Soccer T-Shirts</h1>
 
         <nav className="feed-nav" aria-label="Primary navigation">
-          <NavLink to="/feed" end className={navClassName}>
+          <button type="button" className={navClassName('/feed')} onClick={() => handleRouteChange('/feed')}>
             <HomeIcon /> Home
-          </NavLink>
-          <NavLink to="/create" className={navClassName}>
+          </button>
+          <button type="button" className={navClassName('/create')} onClick={() => handleRouteChange('/create')}>
             <CreateIcon /> Create
-          </NavLink>
-          <NavLink to="/profile" className={navClassName}>
+          </button>
+          <button type="button" className={navClassName('/profile')} onClick={() => handleRouteChange('/profile')}>
             <ProfileIcon /> Profile
-          </NavLink>
+          </button>
         </nav>
-
-        <section className="feed-collections">
-          <h2>Collections</h2>
-          <a href="#" className="feed-nav-item">
-            <FolderIcon /> My Collections
-          </a>
-          <a href="#" className="feed-nav-item">
-            <FolderIcon /> Saved Designs
-          </a>
-        </section>
       </div>
 
       <button
