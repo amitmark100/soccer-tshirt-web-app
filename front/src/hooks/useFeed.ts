@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { Post } from '../types/types';
@@ -12,6 +12,10 @@ interface UseFeedReturn {
   hasMore: boolean;
   isLoading: boolean;
   errorMessage: string;
+  smartSearchResults: Post[] | null;
+  smartSearchReasoning: string;
+  isSmartSearchLoading: boolean;
+  smartSearchErrorMessage: string;
   toggleLike: (postId: string) => void;
   addComment: (postId: string, commentText: string) => void;
   editPost: (
@@ -19,6 +23,8 @@ interface UseFeedReturn {
     input: { team: string; league: string; price: number; size: string; description: string }
   ) => void;
   deletePost: (postId: string) => void;
+  runSmartSearch: (query: string) => void;
+  clearSmartSearch: () => void;
   currentUserId: string;
   loadMore: () => void;
   resetVisibleCount: () => void;
@@ -32,6 +38,8 @@ export const useFeed = (): UseFeedReturn => {
   const API = useAPI();
   const queryClient = useQueryClient();
   const [visibleCount, setVisibleCount] = useState<number>(PAGE_SIZE);
+  const [smartSearchResults, setSmartSearchResults] = useState<Post[] | null>(null);
+  const [smartSearchReasoning, setSmartSearchReasoning] = useState<string>('');
 
   const {
     data: posts = [],
@@ -42,9 +50,9 @@ export const useFeed = (): UseFeedReturn => {
     queryFn: API.post.getFeedPosts,
   });
 
-  const refreshFeed = () => {
+  const refreshFeed = useCallback(() => {
     void queryClient.invalidateQueries({ queryKey: feedQueryKey });
-  };
+  }, [queryClient]);
 
   const toggleLikeMutation = useMutation({
     mutationFn: API.post.toggleLike,
@@ -67,19 +75,50 @@ export const useFeed = (): UseFeedReturn => {
     onSuccess: refreshFeed,
   });
 
+  const smartSearchMutation = useMutation({
+    mutationFn: API.post.smartSearch,
+    onSuccess: ({ reasoning, posts: matchedPosts }) => {
+      setSmartSearchReasoning(reasoning);
+      setSmartSearchResults(matchedPosts);
+    },
+  });
+
   const hasMore = visibleCount < posts.length;
 
   const visiblePosts = useMemo(() => {
     return posts.slice(0, visibleCount);
   }, [posts, visibleCount]);
 
-  const loadMore = () => {
+  const loadMore = useCallback(() => {
     setVisibleCount((currentCount) => {
       return Math.min(currentCount + PAGE_SIZE, posts.length);
     });
-  };
+  }, [posts.length]);
 
   const findPost = (postId: string) => posts.find((post) => post.id === postId);
+
+  const runSmartSearch = useCallback((query: string) => {
+    const trimmedQuery = query.trim();
+
+    if (!trimmedQuery) {
+      setSmartSearchReasoning('');
+      setSmartSearchResults([]);
+      smartSearchMutation.reset();
+      return;
+    }
+
+    smartSearchMutation.mutate(trimmedQuery);
+  }, [smartSearchMutation]);
+
+  const clearSmartSearch = useCallback(() => {
+    setSmartSearchReasoning('');
+    setSmartSearchResults(null);
+    smartSearchMutation.reset();
+  }, [smartSearchMutation]);
+
+  const resetVisibleCount = useCallback(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, []);
 
   return {
     posts,
@@ -88,6 +127,11 @@ export const useFeed = (): UseFeedReturn => {
     hasMore,
     isLoading,
     errorMessage: error instanceof Error ? error.message : '',
+    smartSearchResults,
+    smartSearchReasoning,
+    isSmartSearchLoading: smartSearchMutation.isPending,
+    smartSearchErrorMessage:
+      smartSearchMutation.error instanceof Error ? smartSearchMutation.error.message : '',
     toggleLike: (postId: string) => {
       toggleLikeMutation.mutate(postId);
     },
@@ -118,10 +162,10 @@ export const useFeed = (): UseFeedReturn => {
     deletePost: (postId: string) => {
       deletePostMutation.mutate(postId);
     },
+    runSmartSearch,
+    clearSmartSearch,
     currentUserId: authUser?.id || '',
     loadMore,
-    resetVisibleCount: () => {
-      setVisibleCount(PAGE_SIZE);
-    },
+    resetVisibleCount,
   };
 };

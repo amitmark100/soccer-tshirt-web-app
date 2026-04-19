@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
-import { useMutation } from '@tanstack/react-query';
 
 import Post from '../components/Feed/Post';
 import PostPreviewModal from '../components/Common/PostPreviewModal';
+import Loader from '../components/Loader/Loader';
 import LeftSidebar from '../components/Sidebar/LeftSidebar';
 import RightSidebar from '../components/Sidebar/RightSidebar';
-import { useAPI } from '../hooks/useAPI';
 import { useFeed } from '../hooks/useFeed';
 import { Post as PostType } from '../types/types';
 import '../styles/FeedPage.css';
@@ -13,11 +12,8 @@ import '../styles/FeedPage.css';
 const FeedPage = () => {
   const [searchValue, setSearchValue] = useState<string>('');
   const [isSmartSearchEnabled, setIsSmartSearchEnabled] = useState<boolean>(false);
-  const [smartSearchReasoning, setSmartSearchReasoning] = useState<string>('');
-  const [smartSearchResults, setSmartSearchResults] = useState<PostType[] | null>(null);
   const [selectedPost, setSelectedPost] = useState<PostType | null>(null);
   const loadMoreRef = useRef<HTMLDivElement | null>(null);
-  const API = useAPI();
   const {
     posts,
     visiblePosts,
@@ -25,22 +21,20 @@ const FeedPage = () => {
     hasMore,
     isLoading,
     errorMessage,
+    smartSearchResults,
+    smartSearchReasoning,
+    isSmartSearchLoading,
+    smartSearchErrorMessage,
     toggleLike,
     addComment,
     editPost,
     deletePost,
+    runSmartSearch,
+    clearSmartSearch,
     currentUserId,
     loadMore,
     resetVisibleCount
   } = useFeed();
-
-  const smartSearchMutation = useMutation({
-    mutationFn: (userPrompt: string) => API.post.smartSearch(userPrompt),
-    onSuccess: ({ reasoning, posts: matchedPosts }) => {
-      setSmartSearchReasoning(reasoning);
-      setSmartSearchResults(matchedPosts);
-    },
-  });
 
   useEffect(() => {
     const isStandardSearchActive = searchValue.trim().length > 0;
@@ -68,11 +62,9 @@ const FeedPage = () => {
 
   useEffect(() => {
     if (!isSmartSearchEnabled) {
-      setSmartSearchReasoning('');
-      setSmartSearchResults(null);
-      smartSearchMutation.reset();
+      clearSmartSearch();
     }
-  }, [isSmartSearchEnabled, smartSearchMutation]);
+  }, [clearSmartSearch, isSmartSearchEnabled]);
 
   useEffect(() => {
     resetVisibleCount();
@@ -95,8 +87,8 @@ const FeedPage = () => {
       : visiblePosts;
   const shouldShowSmartSearchEmptyState =
     isSmartSearchEnabled &&
-    !smartSearchMutation.isPending &&
-    !smartSearchMutation.isError &&
+    !isSmartSearchLoading &&
+    !smartSearchErrorMessage &&
     smartSearchResults !== null &&
     displayedPosts.length === 0;
   const shouldShowStandardSearchEmptyState =
@@ -108,15 +100,7 @@ const FeedPage = () => {
     (isStandardSearchActive ? hasMoreStandardSearchResults : hasMore);
 
   const handleSmartSearch = () => {
-    const trimmedSearchValue = searchValue.trim();
-
-    if (!trimmedSearchValue) {
-      setSmartSearchReasoning('');
-      setSmartSearchResults([]);
-      return;
-    }
-
-    smartSearchMutation.mutate(trimmedSearchValue);
+    runSmartSearch(searchValue);
   };
 
   return (
@@ -168,9 +152,9 @@ const FeedPage = () => {
                   type="button"
                   className="feed-smart-search-button"
                   onClick={handleSmartSearch}
-                  disabled={smartSearchMutation.isPending || !searchValue.trim()}
+                  disabled={isSmartSearchLoading || !searchValue.trim()}
                 >
-                  {smartSearchMutation.isPending ? 'Searching...' : 'Search'}
+                  {isSmartSearchLoading ? 'Searching...' : 'Search'}
                 </button>
               ) : null}
             </div>
@@ -190,13 +174,18 @@ const FeedPage = () => {
         ) : null}
 
         <section className="feed-posts" aria-label="Design feed">
-          {isLoading ? <p className="feed-end">Loading designs...</p> : null}
+          {isLoading ? <div className="feed-end"><Loader label="Loading designs..." /></div> : null}
           {errorMessage ? <p className="feed-end">{errorMessage}</p> : null}
-          {isSmartSearchEnabled && smartSearchMutation.isError ? (
-            <p className="feed-end">{smartSearchMutation.error instanceof Error ? smartSearchMutation.error.message : 'Smart search failed'}</p>
+          {isSmartSearchEnabled && smartSearchErrorMessage ? (
+            <p className="feed-end">{smartSearchErrorMessage || 'Smart search failed'}</p>
+          ) : null}
+          {isSmartSearchEnabled && isSmartSearchLoading ? (
+            <div className="feed-end">
+              <Loader label="Searching designs..." />
+            </div>
           ) : null}
 
-          {displayedPosts.map((post) => (
+          {(!isSmartSearchEnabled || !isSmartSearchLoading) && displayedPosts.map((post) => (
             <Post
               key={post.id}
               post={post}
