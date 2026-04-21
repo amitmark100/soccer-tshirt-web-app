@@ -11,109 +11,94 @@ import postRoutes from './routes/postRoutes';
 import authRoutes from './routes/authRoutes';
 import commentRoutes from './routes/commentRoutes';
 
-const app: Express = express();
+export async function initApp() {
+  await connectDB();
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadsDir)) {
-  fs.mkdirSync(uploadsDir, { recursive: true });
-  console.log('Created uploads directory:', uploadsDir);
-}
+  const app: Express = express();
 
-const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
-
-// Middleware
-app.use(
-  cors({
-    origin: frontendOrigin,
-    credentials: true,
-  })
-);
-app.use(express.json());
-
-// Serve uploaded files as static assets
-app.use('/uploads', express.static(uploadsDir));
-
-// Swagger configuration (only in development)
-if (process.env.NODE_ENV !== 'production') {
-  const swaggerOptions = {
-    definition: {
-      openapi: '3.0.0',
-      info: {
-        title: 'Soccer T-Shirts REST API',
-        version: '1.0.0',
-        description: 'REST API for Soccer T-Shirt marketplace with authentication using JWT',
-      },
-      servers: [{ url: `http://localhost:${process.env.PORT || 5000}` }],
-      components: {
-        securitySchemes: {
-          bearerAuth: {
-            type: 'http',
-            scheme: 'bearer',
-            bearerFormat: 'JWT',
-            description: 'JWT Bearer token for authentication',
-          },
-        },
-      },
-    },
-    apis: ['./src/docs/*.ts'],
-  };
-  const specs = swaggerJsDoc(swaggerOptions);
-  app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
-}
-
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/post', postRoutes);
-app.use('/api/comments', commentRoutes);
-
-// Health check
-app.get('/', (_req, res) => {
-  res.json({ message: 'Soccer Jersey Store API' });
-});
-
-const PORT = process.env.PORT || 5000;
-const shouldUseHttps = process.env.USE_HTTPS === 'true';
-
-async function startServer(): Promise<void> {
-  try {
-    await connectDB();
-
-    const keyPath = path.join(__dirname, '../server.key');
-    const certPath = path.join(__dirname, '../server.cert');
-    const hasSSL = fs.existsSync(keyPath) && fs.existsSync(certPath);
-
-    if (shouldUseHttps && hasSSL) {
-      const privateKey = fs.readFileSync(keyPath, 'utf8');
-      const certificate = fs.readFileSync(certPath, 'utf8');
-      const credentials = { key: privateKey, cert: certificate };
-
-      const httpsServer = https.createServer(credentials, app);
-      httpsServer.listen(PORT, () => {
-        console.log(`Server listening on https://localhost:${PORT}`);
-        console.log('SSL certificates loaded successfully');
-      });
-      return;
-    }
-
-    if (shouldUseHttps && !hasSSL) {
-      console.warn('SSL certificate files not found (server.key, server.cert)');
-      console.warn(
-        'Falling back to HTTP mode. To enable HTTPS, generate certificates using:'
-      );
-      console.warn(
-        'openssl req -x509 -newkey rsa:2048 -keyout server.key -out server.cert -days 365 -nodes'
-      );
-      console.warn('');
-    }
-
-    app.listen(PORT, () => {
-      console.log(`Server listening on http://localhost:${PORT}`);
-    });
-  } catch (error) {
-    console.error('Failed to start server:', error);
-    process.exit(1);
+  const uploadsDir = path.join(__dirname, '../uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
   }
+
+  const frontendOrigin = process.env.FRONTEND_ORIGIN || 'http://localhost:5173';
+
+  app.use(
+    cors({
+      origin: frontendOrigin,
+      credentials: true,
+    })
+  );
+  app.use(express.json());
+  app.use('/uploads', express.static(uploadsDir));
+
+  if (process.env.NODE_ENV !== 'production') {
+    const swaggerOptions = {
+      definition: {
+        openapi: '3.0.0',
+        info: {
+          title: 'Soccer T-Shirts REST API',
+          version: '1.0.0',
+        },
+        servers: [
+          {
+            url: `http://localhost:${process.env.PORT || 5000}`,
+          },
+        ],
+      },
+      apis: ['./src/docs/*.ts'],
+    };
+    const specs = swaggerJsDoc(swaggerOptions);
+    app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
+  }
+
+  // Routes
+  app.use('/api/auth', authRoutes);
+  app.use('/api/post', postRoutes);
+  app.use('/api/comments', commentRoutes);
+
+  app.get('/', (_req, res) => {
+    res.json({ message: 'Soccer Jersey Store API' });
+  });
+
+  const PORT = process.env.PORT || 5000;
+  const shouldUseHttps = process.env.USE_HTTPS === 'true';
+
+  let server: any;
+
+  if (process.env.NODE_ENV !== 'test') {
+    if (shouldUseHttps) {
+      const keyPath = path.join(__dirname, '../server.key');
+      const certPath = path.join(__dirname, '../server.cert');
+      const hasSSL = fs.existsSync(keyPath) && fs.existsSync(certPath);
+
+      if (hasSSL) {
+        const credentials = { 
+          key: fs.readFileSync(keyPath, 'utf8'), 
+          cert: fs.readFileSync(certPath, 'utf8') 
+        };
+        server = https.createServer(credentials, app).listen(PORT);
+      } else {
+        server = app.listen(PORT);
+      }
+    } else {
+      server = app.listen(PORT);
+    }
+  } else {
+    server = { close: (cb: any) => cb && cb() };
+  }
+
+  return { app, server };
 }
+
+const startServer = async () => {
+  if (process.env.NODE_ENV !== 'test') {
+    try {
+      await initApp();
+    } catch (error) {
+      console.error('Failed to start server:', error);
+    }
+  }
+};
 
 startServer();
