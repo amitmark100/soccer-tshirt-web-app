@@ -8,6 +8,8 @@ interface PostPreviewModalProps {
   image: string;
   creatorLabel: string;
   timestamp: string;
+  price?: number;
+  size?: string;
   likes: number;
   secondaryMetricLabel: string;
   secondaryMetricValue: number;
@@ -21,6 +23,8 @@ const PostPreviewModal = ({
   image,
   creatorLabel,
   timestamp,
+  price,
+  size,
   likes,
   secondaryMetricLabel,
   secondaryMetricValue,
@@ -41,9 +45,13 @@ const PostPreviewModal = ({
         </div>
         <div className="post-preview-content">
           <p className="post-preview-meta">
-            {creatorLabel} • {timestamp}
+            {creatorLabel} | {timestamp}
           </p>
           <h2>{title}</h2>
+          <div className="post-preview-details">
+            {typeof price === 'number' && price > 0 ? <span>${price}</span> : null}
+            {size ? <span>Size {size}</span> : null}
+          </div>
           <p className="post-preview-description">{description}</p>
           <div className="post-preview-stats">
             <span>{formatCompactCount(likes)} likes</span>
