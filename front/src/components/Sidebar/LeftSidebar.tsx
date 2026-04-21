@@ -3,6 +3,7 @@ import { NavLink, useNavigate, useLocation } from 'react-router-dom';
 import { googleLogout } from '@react-oauth/google';
 import { useAPI } from '../../hooks/useAPI';
 import { clearAuthCookies } from '../../utils/authCookies';
+import logo from '../../assets/logo.png';
 
 const HomeIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
@@ -81,11 +82,16 @@ const LeftSidebar = () => {
         </nav>
       </div>
 
+<div className="feed-logo-container">
+        <img src={logo} alt="Soccer T-Shirts Logo" className="feed-logo-image" />
+      </div>
+
       <button
         type="button"
         onClick={handleLogout}
         disabled={isLoggingOut}
         className="feed-nav-item feed-logout"
+        style={{ position: 'relative', bottom: '15px' }} // שורת השינוי
       >
         <LogoutIcon /> Log Out
       </button>

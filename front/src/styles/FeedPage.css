@@ -93,6 +93,24 @@ body {
   margin-top: 24px;
 }
 
+.feed-logo-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px;
+}
+
+.feed-logo-image {
+  max-width: 80%;
+  height: auto;
+  opacity: 0.85;
+  transition: opacity 0.2s ease;
+}
+
+.feed-logo-image:hover {
+  opacity: 1;
+}
+
 .feed-main {
   display: flex;
   flex-direction: column;
