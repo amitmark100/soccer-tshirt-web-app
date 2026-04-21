@@ -220,6 +220,8 @@ const FeedPage = () => {
         image={selectedPost?.designImage ?? ''}
         creatorLabel={selectedPost ? `@${selectedPost.username}` : ''}
         timestamp={selectedPost?.timestamp ?? ''}
+        price={selectedPost?.price}
+        size={selectedPost?.size}
         likes={selectedPost?.likes ?? 0}
         secondaryMetricLabel="comments"
         secondaryMetricValue={selectedPost?.totalComments ?? 0}

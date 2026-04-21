@@ -9,6 +9,7 @@ const FEED_FETCH_LIMIT = 5000;
 interface BackendComment {
   _id: string;
   postId: string;
+  createdAt?: string;
   content: string;
   author: {
     _id: string;
@@ -96,6 +97,7 @@ const mapComment = (comment: BackendComment): Comment => ({
   userId: comment.author._id,
   username: comment.author.username,
   text: comment.content,
+  timestamp: comment.createdAt ? formatTimestamp(comment.createdAt) : '',
   userAvatar:
     toAbsoluteUrl(comment.author.profilePicture) ||
     'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=80&q=80',

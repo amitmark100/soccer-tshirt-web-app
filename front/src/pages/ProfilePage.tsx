@@ -262,6 +262,8 @@ const ProfilePage = () => {
         image={selectedDesign?.image ?? ''}
         creatorLabel={`@${user.name}`}
         timestamp={selectedDesign?.createdAt ?? ''}
+        price={selectedDesign?.price}
+        size={selectedDesign?.size}
         likes={selectedDesign?.likes ?? 0}
         secondaryMetricLabel="views"
         secondaryMetricValue={selectedDesign?.views ?? 0}

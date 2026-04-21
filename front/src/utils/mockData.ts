@@ -20,21 +20,24 @@ export const posts: Post[] = [
         userId: 'user-11',
         username: 'UserA',
         text: 'This is fire! Need this asap.',
-        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=80&q=80',
+        timestamp: '18 minutes ago'
       },
       {
         id: 'comment-2',
         userId: 'user-12',
         username: 'UserB',
         text: 'Love the retro vibes! Great work.',
-        userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=80&q=80',
+        timestamp: '11 minutes ago'
       },
       {
         id: 'comment-3',
         userId: 'user-13',
         username: 'KitScout',
         text: 'The pattern placement is super clean.',
-        userAvatar: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1568602471122-7832951cc4c5?auto=format&fit=crop&w=80&q=80',
+        timestamp: '4 minutes ago'
       }
     ],
     totalComments: 284
@@ -56,21 +59,24 @@ export const posts: Post[] = [
         userId: 'user-14',
         username: 'UserC',
         text: 'Classic! This color blocking is perfect.',
-        userAvatar: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1633332755192-727a05c4013d?auto=format&fit=crop&w=80&q=80',
+        timestamp: '52 minutes ago'
       },
       {
         id: 'comment-5',
         userId: 'user-15',
         username: 'UserD',
         text: 'The textures are amazing!',
-        userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=80&q=80',
+        timestamp: '36 minutes ago'
       },
       {
         id: 'comment-6',
         userId: 'user-16',
         username: 'DesignNerd',
         text: 'Would buy this in a heartbeat.',
-        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=80&q=80',
+        timestamp: '13 minutes ago'
       }
     ],
     totalComments: 150
@@ -93,14 +99,16 @@ export const posts: Post[] = [
         userId: 'user-17',
         username: 'StadiumSoul',
         text: 'Need this with gold numbering.',
-        userAvatar: 'https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1541532713592-79a0317b6b77?auto=format&fit=crop&w=80&q=80',
+        timestamp: '1 hour ago'
       },
       {
         id: 'comment-8',
         userId: 'user-18',
         username: 'PitchMode',
         text: 'Simple and premium, really good.',
-        userAvatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=80&q=80'
+        userAvatar: 'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?auto=format&fit=crop&w=80&q=80',
+        timestamp: '27 minutes ago'
       }
     ],
     totalComments: 63
