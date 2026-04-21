@@ -91,6 +91,7 @@ const LeftSidebar = () => {
         onClick={handleLogout}
         disabled={isLoggingOut}
         className="feed-nav-item feed-logout"
+        style={{ position: 'relative', bottom: '15px' }}
       >
         <LogoutIcon /> Log Out
       </button>
