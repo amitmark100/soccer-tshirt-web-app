@@ -73,7 +73,8 @@ export const AppDataProvider = ({ children }: AppDataProviderProps) => {
           userId: 'current-user',
           username: 'you',
           text: trimmedComment,
-          userAvatar: profileUser.avatar
+          userAvatar: profileUser.avatar,
+          timestamp: 'Just now'
         };
 
         return {

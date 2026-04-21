@@ -469,6 +469,10 @@ button.feed-stat:hover {
   gap: 8px;
 }
 
+.feed-comment-body {
+  min-width: 0;
+}
+
 .feed-comment-avatar {
   width: 28px;
   height: 28px;
@@ -485,6 +489,13 @@ button.feed-stat:hover {
 .feed-comment-username {
   font-weight: 700;
   color: #fff;
+}
+
+.feed-comment-time {
+  display: inline-block;
+  margin-top: 3px;
+  color: var(--feed-muted);
+  font-size: 0.82rem;
 }
 
 .feed-link-button {

@@ -4,6 +4,7 @@ export interface Comment {
   username: string;
   text: string;
   userAvatar: string;
+  timestamp?: string;
 }
 
 export interface Post {
