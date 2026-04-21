@@ -4,6 +4,8 @@ import cors from 'cors';
 import path from 'path';
 import fs from 'fs';
 import https from 'https';
+import swaggerUI from 'swagger-ui-express';
+import swaggerJsDoc from 'swagger-jsdoc';
 import { connect as connectDB } from './config/db';
 import postRoutes from './routes/postRoutes';
 import authRoutes from './routes/authRoutes';
@@ -31,6 +33,34 @@ app.use(express.json());
 
 // Serve uploaded files as static assets
 app.use('/uploads', express.static(uploadsDir));
+
+// Swagger configuration (only in development)
+if (process.env.NODE_ENV !== 'production') {
+  const swaggerOptions = {
+    definition: {
+      openapi: '3.0.0',
+      info: {
+        title: 'Soccer T-Shirts REST API',
+        version: '1.0.0',
+        description: 'REST API for Soccer T-Shirt marketplace with authentication using JWT',
+      },
+      servers: [{ url: `http://localhost:${process.env.PORT || 5000}` }],
+      components: {
+        securitySchemes: {
+          bearerAuth: {
+            type: 'http',
+            scheme: 'bearer',
+            bearerFormat: 'JWT',
+            description: 'JWT Bearer token for authentication',
+          },
+        },
+      },
+    },
+    apis: ['./src/docs/*.ts'],
+  };
+  const specs = swaggerJsDoc(swaggerOptions);
+  app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
+}
 
 // Routes
 app.use('/api/auth', authRoutes);

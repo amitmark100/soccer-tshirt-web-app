@@ -83,7 +83,7 @@ const LeftSidebar = () => {
       </div>
 
 <div className="feed-logo-container">
-        <img src={logo} alt="Soccer T-Shirts Logo" className="feed-logo-image" />
+        <img src={logo} alt="Soccer T-Shirts Logo" className="feed-logo-image" style={{ filter: 'brightness(0) invert(1)' }} />
       </div>
 
       <button
@@ -91,7 +91,6 @@ const LeftSidebar = () => {
         onClick={handleLogout}
         disabled={isLoggingOut}
         className="feed-nav-item feed-logout"
-        style={{ position: 'relative', bottom: '15px' }} // שורת השינוי
       >
         <LogoutIcon /> Log Out
       </button>
