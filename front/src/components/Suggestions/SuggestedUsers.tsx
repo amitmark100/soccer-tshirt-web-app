@@ -17,9 +17,6 @@ const SuggestedUsers = ({ users }: SuggestedUsersProps) => {
     <section className="feed-panel">
       <div className="feed-panel-header">
         <h2>Top rated Users</h2>
-        <button type="button" className="feed-link-button">
-          See All
-        </button>
       </div>
 
       <ul className="feed-user-list">

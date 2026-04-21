@@ -4,6 +4,7 @@ import { Post, Comment } from '../types/types';
 import { getAuthUser } from '../utils/authCookies';
 
 const BACKEND_URL = 'http://localhost:5000';
+const FEED_FETCH_LIMIT = 5000;
 
 interface BackendComment {
   _id: string;
@@ -39,6 +40,11 @@ interface BackendPost {
 
 interface PostsResponse {
   posts: BackendPost[];
+}
+
+interface SmartSearchResponse {
+  posts: BackendPost[];
+  aiReasoning: string;
 }
 
 interface CurrentUserResponse {
@@ -199,7 +205,7 @@ export const useAPI = () => {
       post: {
         getFeedPosts: async (): Promise<Post[]> => {
           const [postsData, commentsData] = await Promise.all([
-            request<PostsResponse>('/api/post'),
+            request<PostsResponse>(`/api/post?limit=${FEED_FETCH_LIMIT}`),
             request<BackendComment[]>('/api/comments'),
           ]);
 
@@ -221,7 +227,9 @@ export const useAPI = () => {
           }),
         getUserPosts: async (userId: string): Promise<Post[]> => {
           const [postsData, commentsData] = await Promise.all([
-            request<PostsResponse>(`/api/post?userId=${encodeURIComponent(userId)}`),
+            request<PostsResponse>(
+              `/api/post?userId=${encodeURIComponent(userId)}&limit=${FEED_FETCH_LIMIT}`
+            ),
             request<BackendComment[]>('/api/comments'),
           ]);
 
@@ -259,6 +267,31 @@ export const useAPI = () => {
           request<{ msg: string }>(`/api/post/${postId}`, {
             method: 'DELETE',
           }),
+        smartSearch: async (
+          userPrompt: string
+        ): Promise<{ reasoning: string; posts: Post[] }> => {
+          const [searchData, commentsData] = await Promise.all([
+            request<SmartSearchResponse>('/api/post/ai-search', {
+              method: 'POST',
+              body: JSON.stringify({ query: userPrompt.trim() }),
+            }),
+            request<BackendComment[]>('/api/comments'),
+          ]);
+
+          const commentsByPost = new Map<string, BackendComment[]>();
+          for (const comment of commentsData) {
+            const existing = commentsByPost.get(comment.postId) || [];
+            existing.push(comment);
+            commentsByPost.set(comment.postId, existing);
+          }
+
+          return {
+            reasoning: searchData.aiReasoning,
+            posts: searchData.posts.map((post) =>
+              mapBackendPostToFeedPost(post, commentsByPost.get(post._id) || [])
+            ),
+          };
+        },
         mapToFeedPost: mapBackendPostToFeedPost,
       },
       comment: {
