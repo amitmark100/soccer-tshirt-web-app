@@ -41,7 +41,6 @@ app.use(express.json());
 app.use('/uploads', express.static(uploadsDir));
 
 // Swagger Setup
-if (process.env.NODE_ENV !== 'production') {
   const swaggerOptions = {
     definition: {
       openapi: '3.0.0',
@@ -54,7 +53,7 @@ if (process.env.NODE_ENV !== 'production') {
   };
   const specs = swaggerJsDoc(swaggerOptions);
   app.use('/api-docs', swaggerUI.serve, swaggerUI.setup(specs));
-}
+
 
 // Routes
 app.use('/api/auth', authRoutes);
