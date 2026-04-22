@@ -28,6 +28,13 @@ app.use(
     credentials: true,
   })
 );
+
+// Security header middleware for OAuth popup support in HTTPS mode
+app.use((_req, res, next) => {
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  next();
+});
+
 app.use(express.json());
 
 // Serve uploaded files as static assets
@@ -59,47 +66,50 @@ app.get('/', (_req, res) => {
   res.json({ message: 'Soccer Jersey Store API' });
 });
 
-/**
- * פונקציה לאתחול האפליקציה - משמשת גם את הטסטים
- */
+
 export async function initApp() {
   await connectDB();
   return { app };
 }
 
-const PORT = process.env.PORT || 5000;
-const shouldUseHttps = process.env.USE_HTTPS === 'true';
 
-/**
- * פונקציה להפעלת השרת
- */
 async function startServer(): Promise<void> {
   try {
     const { app: initializedApp } = await initApp();
 
-    // אם אנחנו בטסטים, לא פותחים את ה-Listen
     if (process.env.NODE_ENV === 'test') {
       return;
     }
 
-    const keyPath = path.join(__dirname, '../server.key');
-    const certPath = path.join(__dirname, '../server.cert');
-    const hasSSL = fs.existsSync(keyPath) && fs.existsSync(certPath);
+    const PORT = process.env.PORT || 5000;
 
-    if (shouldUseHttps && hasSSL) {
-      const credentials = { 
-        key: fs.readFileSync(keyPath, 'utf8'), 
-        cert: fs.readFileSync(certPath, 'utf8') 
-      };
-      https.createServer(credentials, initializedApp).listen(PORT, () => {
-        console.log(`🚀 Server listening on https://localhost:${PORT}`);
-      });
-    } else {
-      if (shouldUseHttps && !hasSSL) {
-        console.warn('SSL certificates not found, falling back to HTTP');
-      }
+    // Standard HTTP server for non-production environments
+    if (process.env.NODE_ENV !== 'production') {
       initializedApp.listen(PORT, () => {
-        console.log(`🚀 Server listening on http://localhost:${PORT}`);
+        console.log(`🚀 Development Server ready at http://localhost:${PORT}`);
+      });
+    } 
+    // HTTPS server for production
+    else {
+      const keyPath = path.join(__dirname, '../server.key');
+      const certPath = path.join(__dirname, '../server.cert');
+
+      // Verify SSL certificates exist
+      if (!fs.existsSync(keyPath) || !fs.existsSync(certPath)) {
+        console.error('❌ SSL certificate files missing!');
+        console.error(`Expected files at: ${keyPath} and ${certPath}`);
+        console.error('Cannot start HTTPS server in production mode.');
+        process.exit(1);
+      }
+
+      // Load and create HTTPS server
+      const options = {
+        key: fs.readFileSync(keyPath),
+        cert: fs.readFileSync(certPath)
+      };
+
+      https.createServer(options, initializedApp).listen(PORT, () => {
+        console.log(`🔒 Production Secure Server ready at https://localhost:${PORT}`);
       });
     }
   } catch (error) {
@@ -108,7 +118,6 @@ async function startServer(): Promise<void> {
   }
 }
 
-// הפעלה אוטומטית של השרת
 startServer();
 
 export default app;

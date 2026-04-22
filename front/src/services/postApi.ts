@@ -53,7 +53,7 @@ export const aiSearchPosts = async (
   limit: number = 10
 ): Promise<AISearchResponse> => {
   try {
-    const response = await apiClient.post('/api/post/ai-search', {
+    const response = await apiClient.post('/post/ai-search', {
       query,
       page,
       limit,

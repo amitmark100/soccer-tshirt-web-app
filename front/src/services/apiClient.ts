@@ -1,4 +1,14 @@
-const BACKEND_URL = 'http://localhost:5000';
+// Get backend API URL from environment with HTTPS fallback
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:5000/api';
+
+// Helper to safely concatenate base URL with path, avoiding double slashes
+const buildUrl = (basePath: string, endpoint: string): string => {
+  // Remove trailing slash from base if present
+  const base = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+  // Ensure endpoint starts with /
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${base}${path}`;
+};
 
 // Helper to get token from localStorage
 const getAuthToken = (): string | null => {
@@ -24,7 +34,7 @@ interface ApiResponse<T> {
 
 const apiClient = {
   async get<T>(path: string, init?: RequestInit): Promise<ApiResponse<T>> {
-    const url = new URL(`${BACKEND_URL}${path}`);
+    const url = new URL(buildUrl(BACKEND_URL, path));
     
     if (init?.params) {
       Object.entries(init.params).forEach(([key, value]) => {
@@ -62,7 +72,7 @@ const apiClient = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${BACKEND_URL}${path}`, {
+    const response = await fetch(buildUrl(BACKEND_URL, path), {
       method: 'POST',
       credentials: 'include',
       headers,
@@ -99,7 +109,7 @@ const apiClient = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${BACKEND_URL}${path}`, {
+    const response = await fetch(buildUrl(BACKEND_URL, path), {
       method: 'PATCH',
       credentials: 'include',
       headers,
@@ -127,7 +137,7 @@ const apiClient = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${BACKEND_URL}${path}`, {
+    const response = await fetch(buildUrl(BACKEND_URL, path), {
       method: 'PUT',
       credentials: 'include',
       headers,
@@ -155,7 +165,7 @@ const apiClient = {
       headers['Authorization'] = `Bearer ${token}`;
     }
 
-    const response = await fetch(`${BACKEND_URL}${path}`, {
+    const response = await fetch(buildUrl(BACKEND_URL, path), {
       method: 'DELETE',
       credentials: 'include',
       headers,

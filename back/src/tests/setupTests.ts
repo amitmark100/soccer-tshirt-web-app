@@ -2,9 +2,10 @@ import { Express } from 'express';
 import mongoose from 'mongoose';
 import { initApp } from '../index';
 
-// הגדרת סביבת טסטים ו-DB נפרד
 process.env.NODE_ENV = 'test';
 process.env.MONGO_URI = 'mongodb://127.0.0.1:27017/soccer_store_test';
+process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+
 
 declare global {
   var initTestServer: () => Promise<Express>;
