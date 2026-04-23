@@ -21,5 +21,9 @@ export default defineConfig(({ mode }) => {
       port: Number(env.FE_PORT) || 5173,
       https: enableHttps,
     },
+    preview: {
+      port: Number(env.FE_PORT) || 4173,
+      https: enableHttps,
+    },
   }
 })
