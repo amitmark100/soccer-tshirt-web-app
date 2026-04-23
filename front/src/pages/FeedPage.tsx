@@ -68,7 +68,7 @@ const FeedPage = () => {
 
   useEffect(() => {
     resetVisibleCount();
-  }, [searchValue, isSmartSearchEnabled, resetVisibleCount]);
+  }, [searchValue, isSmartSearchEnabled]);
 
   const isStandardSearchActive = searchValue.trim().length > 0;
 

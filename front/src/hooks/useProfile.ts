@@ -28,6 +28,11 @@ interface UseProfileReturn {
   closeEditModal: () => void;
 }
 
+// Get backend API URL from environment with HTTPS fallback
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:5000/api';
+// Extract base URL without /api suffix for file URLs
+const BACKEND_BASE = API_BASE_URL.replace(/\/api$/, '');
+
 const toProfileUser = (input: {
   id: string;
   username: string;
@@ -39,8 +44,8 @@ const toProfileUser = (input: {
   name: input.username,
   email: input.email,
   joinDate: input.createdAt,
-  avatar: input.profilePicture ? `http://localhost:5000${input.profilePicture}` : '',
-  bannerImage: input.profilePicture ? `http://localhost:5000${input.profilePicture}` : '',
+  avatar: input.profilePicture ? `${BACKEND_BASE}${input.profilePicture}` : '',
+  bannerImage: input.profilePicture ? `${BACKEND_BASE}${input.profilePicture}` : '',
   isVerified: false,
 });
 

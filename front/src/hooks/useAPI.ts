@@ -3,8 +3,18 @@ import { useMemo } from 'react';
 import { Post, Comment } from '../types/types';
 import { getAuthUser } from '../utils/authCookies';
 
-const BACKEND_URL = 'http://localhost:5000';
+
+const BACKEND_URL = import.meta.env.VITE_API_BASE_URL || 'https://localhost:5000/api';
+// Extract base URL without /api suffix for serving images (avatars, uploads, etc.)
+const BACKEND_BASE = BACKEND_URL.replace(/\/api$/, '');
 const FEED_FETCH_LIMIT = 5000;
+
+// Helper to safely concatenate base URL with path, avoiding double slashes
+const buildUrl = (basePath: string, endpoint: string): string => {
+  const base = basePath.endsWith('/') ? basePath.slice(0, -1) : basePath;
+  const path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
+  return `${base}${path}`;
+};
 
 interface BackendComment {
   _id: string;
@@ -59,11 +69,14 @@ interface CurrentUserResponse {
 }
 
 const toAbsoluteUrl = (value: string | null | undefined) => {
-  if (!value) {
-    return '';
-  }
+  if (!value) return '';
+  if (value.startsWith('http')) return value;
 
-  return value.startsWith('http') ? value : `${BACKEND_URL}${value}`;
+
+  const cleanBase = BACKEND_URL.replace(/\/api$/, '');
+  const cleanPath = value.startsWith('/') ? value : `/${value}`;
+  
+  return `${cleanBase}${cleanPath}`;
 };
 
 const formatTimestamp = (value: string) => {
@@ -136,6 +149,7 @@ const mapBackendPostToFeedPost = (
 };
 
 export const useAPI = () => {
+  // Memoize the entire API object to prevent infinite loops from dependency arrays
   return useMemo(() => {
     const request = async <T>(path: string, init?: RequestInit): Promise<T> => {
       const isFormData = init?.body instanceof FormData;
@@ -145,7 +159,7 @@ export const useAPI = () => {
         headers.set('Content-Type', 'application/json');
       }
 
-      const response = await fetch(`${BACKEND_URL}${path}`, {
+      const response = await fetch(buildUrl(BACKEND_URL, path), {
         credentials: 'include',
         ...init,
         headers,
@@ -164,7 +178,7 @@ export const useAPI = () => {
       auth: {
         register: (payload: { username: string; email: string; password: string }) =>
           request<{ msg: string; user: { id: string; username: string; email: string } }>(
-            '/api/auth/register',
+            '/auth/register',
             {
               method: 'POST',
               body: JSON.stringify(payload),
@@ -172,7 +186,7 @@ export const useAPI = () => {
           ),
         login: (payload: { email: string; password: string }) =>
           request<{ msg: string; user: { id: string; username: string; email: string } }>(
-            '/api/auth/login',
+            '/auth/login',
             {
               method: 'POST',
               body: JSON.stringify(payload),
@@ -180,13 +194,13 @@ export const useAPI = () => {
           ),
         googleLogin: (credential: string) =>
           request<{ msg: string; user: { id: string; username: string; email: string; profilePicture?: string } }>(
-            '/api/auth/google',
+            '/auth/google',
             {
               method: 'POST',
               body: JSON.stringify({ credential }),
             }
           ),
-        me: () => request<CurrentUserResponse>('/api/auth/me'),
+        me: () => request<CurrentUserResponse>('/auth/me'),
         updateProfile: (userId: string, payload: { username: string; avatar?: File | null }) => {
           const formData = new FormData();
           formData.append('username', payload.username);
@@ -194,21 +208,21 @@ export const useAPI = () => {
             formData.append('avatar', payload.avatar);
           }
 
-          return request<CurrentUserResponse>('/api/auth/user/' + userId, {
+          return request<CurrentUserResponse>('/auth/user/' + userId, {
             method: 'PUT',
             body: formData,
           });
         },
         logout: () =>
-          request<{ msg: string }>('/api/auth/logout', {
+          request<{ msg: string }>('/auth/logout', {
             method: 'POST',
           }),
       },
       post: {
         getFeedPosts: async (): Promise<Post[]> => {
           const [postsData, commentsData] = await Promise.all([
-            request<PostsResponse>(`/api/post?limit=${FEED_FETCH_LIMIT}`),
-            request<BackendComment[]>('/api/comments'),
+            request<PostsResponse>(`/post?limit=${FEED_FETCH_LIMIT}`),
+            request<BackendComment[]>('/comments'),
           ]);
 
           const commentsByPost = new Map<string, BackendComment[]>();
@@ -223,16 +237,16 @@ export const useAPI = () => {
           );
         },
         create: (formData: FormData) =>
-          request<BackendPost>('/api/post', {
+          request<BackendPost>('/post', {
             method: 'POST',
             body: formData,
           }),
         getUserPosts: async (userId: string): Promise<Post[]> => {
           const [postsData, commentsData] = await Promise.all([
             request<PostsResponse>(
-              `/api/post?userId=${encodeURIComponent(userId)}&limit=${FEED_FETCH_LIMIT}`
+              `/post?userId=${encodeURIComponent(userId)}&limit=${FEED_FETCH_LIMIT}`
             ),
-            request<BackendComment[]>('/api/comments'),
+            request<BackendComment[]>('/comments'),
           ]);
 
           const commentsByPost = new Map<string, BackendComment[]>();
@@ -247,11 +261,11 @@ export const useAPI = () => {
           );
         },
         toggleLike: (postId: string) =>
-          request<BackendPost>(`/api/post/${postId}/like`, {
+          request<BackendPost>(`/post/${postId}/like`, {
             method: 'PATCH',
           }),
         update: (post: Post) =>
-          request<BackendPost>(`/api/post/${post.id}`, {
+          request<BackendPost>(`/post/${post.id}`, {
             method: 'PUT',
             body: JSON.stringify({
               text: post.description,
@@ -266,18 +280,18 @@ export const useAPI = () => {
             }),
           }),
         delete: (postId: string) =>
-          request<{ msg: string }>(`/api/post/${postId}`, {
+          request<{ msg: string }>(`/post/${postId}`, {
             method: 'DELETE',
           }),
         smartSearch: async (
           userPrompt: string
         ): Promise<{ reasoning: string; posts: Post[] }> => {
           const [searchData, commentsData] = await Promise.all([
-            request<SmartSearchResponse>('/api/post/ai-search', {
+            request<SmartSearchResponse>('/post/ai-search', {
               method: 'POST',
               body: JSON.stringify({ query: userPrompt.trim() }),
             }),
-            request<BackendComment[]>('/api/comments'),
+            request<BackendComment[]>('/comments'),
           ]);
 
           const commentsByPost = new Map<string, BackendComment[]>();
@@ -298,11 +312,12 @@ export const useAPI = () => {
       },
       comment: {
         create: (payload: { postId: string; content: string }) =>
-          request<BackendComment>('/api/comments', {
+          request<BackendComment>('/comments', {
             method: 'POST',
             body: JSON.stringify(payload),
           }),
       },
     };
-  }, []);
+  }, []); // Memoized with empty deps - API object never changes
 };
+
