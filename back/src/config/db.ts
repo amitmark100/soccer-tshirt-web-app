@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 
 export async function connect(): Promise<void> {
-  const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/soccer_store';
+  const MONGO_URI = process.env.MONGO_URI || 'mongodb://admin:bartar20%40CS@localhost:21771/soccer_store?authSource=admin';
 
   try {
     if (mongoose.connection.readyState !== 0) {
