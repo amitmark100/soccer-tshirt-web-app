@@ -27,6 +27,10 @@ const configuredOrigins = (process.env.FRONTEND_ORIGIN || '')
 const allowedOrigins = configuredOrigins.length
   ? configuredOrigins
   : [
+      'https://10.10.246.11',
+      'https://10.10.246.11:443',
+      'https://localhost',
+      'https://localhost:443',
       'https://localhost:4001',
       'http://localhost:4001',
       'https://localhost:5173',
