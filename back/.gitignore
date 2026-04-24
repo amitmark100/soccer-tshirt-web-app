@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 /logs/*
+package-lock.json
 *.pem
 uploads/*
 
