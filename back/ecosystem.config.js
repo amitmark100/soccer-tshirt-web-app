@@ -9,7 +9,7 @@ module.exports = {
       watch: false,
       env: {
         NODE_ENV: 'production',
-        PORT: 5000,
+        PORT: 4001,
       },
       out_file: './logs/app.log',
       error_file: './logs/err.log',
